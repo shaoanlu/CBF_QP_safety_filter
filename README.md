@@ -24,11 +24,11 @@ Run `demo.py` to start the simulation. A simple version w/ code generation is pr
 python demo.py  # or python demo_codegen_osqp.py
 ```
 ### Controls
-- Arrow keys: Control the green robot's movement.
-- X: Toggle CBF ON/OFF.
-- Z: Cycle through different CBF alpha values.
-- C: Change the settings of constraints on filtered control.
-- V: Enable/Disable safety filter of blue robots.
+- `Arrow keys`: Control the green robot's movement.
+- `X`: Toggle CBF ON/OFF.
+- `Z`: Cycle through different CBF alpha values.
+- `C`: Change the settings of constraints on filtered control.
+- `V`: Enable/Disable safety filter of blue robots.
 
 ## Program Overview
 The program consists of the following classes and files:
