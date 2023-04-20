@@ -39,7 +39,7 @@ The program consists of the following classes and files:
 - `demo.py`: The entry point of the program that handles user input, robot movement, collision detection, and rendering.
 - `utils.py`: This file contains a helper function to draw the robots on the screen.
 
-## CBF-QP Safety filter
+## CBF-QP safety filter
 The safety filter based on CBF-QP aims to modify a user's command (desired control input) to satisfy system constraints while keeping the modification minimal. The optimization problem of the safety filter is given below. 
 
 ```math
