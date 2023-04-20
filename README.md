@@ -3,7 +3,10 @@
 ## Description
 This Python program demonstrates the use of control barrier functions (CBFs) for safe robot control in a simple 2D environment. The program simulates a controllable green robot navigating through a scenario with stationary and patrolling robots. CBFs are employed to avoid collisions between the green robot and other robots in the environment.
 
-[FIGURE, TBU]
+
+![](demo_safety_filter_off.gif) ![](demo_safety_filter_on.gif)
+
+(Left: w/o safety filter; Rught: w/ safety filter)
 
 ## Dependencies
 The program was develop[ed and tested in the following environment.
@@ -37,4 +40,8 @@ The program consists of the following classes and files:
 
 ## Safety filter formulation
 
+[TBU]
+
 ## References
+- https://qiita.com/seria_hina/items/afd96b930ade860926bc
+- https://ucb-ee106.github.io/106b-sp23site/ (Week 10 - Finishing Grasping, CBFs)
