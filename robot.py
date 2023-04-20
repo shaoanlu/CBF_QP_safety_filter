@@ -39,6 +39,14 @@ class Robot:
     def y(self):
         return self.model.x[1]
 
+    @x.setter
+    def x(self, value):
+        self.model.x[0] = value
+
+    @y.setter
+    def y(self, value):
+        self.model.x[1] = value
+
     def control(
         self,
         key: Optional[int] = None,
