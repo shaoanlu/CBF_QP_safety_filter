@@ -29,6 +29,7 @@ python demo.py  # or python demo_codegen_osqp.py
 - `Z`: Cycle through different CBF alpha values.
 - `C`: Change the settings of constraints on filtered control.
 - `V`: Enable/Disable safety filter of blue robots.
+- `R`: Reset robot positions.
 
 ## Program Overview
 The program consists of the following classes and files:
