@@ -6,7 +6,7 @@ This Python program demonstrates the use of control barrier functions (CBFs) for
 
 ![](demo_safety_filter_off.gif) ![](demo_safety_filter_on.gif)
 
-(Left: w/o safety filter; Rught: w/ safety filter)
+(Left: w/o safety filter; Right: w/ safety filter)
 
 ## Dependencies
 The program was develop[ed and tested in the following environment.
