@@ -1,7 +1,7 @@
 # CBF-QP Safety Filter Playground
 
 ## Description
-This Python program demonstrates the use of control barrier functions (CBFs) for safe robot control in a simple 2D environment. The program simulates a controllable green robot navigating through a scenario with stationary and patrolling robots. CBFs are employed to avoid collisions between the green robot and other robots in the environment.
+This Python program demonstrates the use of control barrier functions (CBFs) for safe robot control in a simple 2D environment. The program simulates a controllable green robot navigating through a scenario with stationary and patrolling robots. CBFs are employed to avoid collisions between the green robot and other robots in the environment. When safety filter is activated, it modified the user command to prevent collision while keeping the modification minimal.
 
 
 ![](demo_safety_filter_off.gif) ![](demo_safety_filter_on.gif)
