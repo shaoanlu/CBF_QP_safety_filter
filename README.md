@@ -38,10 +38,34 @@ The program consists of the following classes and files:
 - `demo.py`: The entry point of the program that handles user input, robot movement, collision detection, and rendering.
 - `utils.py`: This file contains a helper function to draw the robots on the screen.
 
-## Safety filter formulation
+## CBF-QP Safety filter
+The safety filter based on CBF-QP aims to modify a user's command (desired control input) to satisfy system constraints while keeping the modification minimal. The optimization problem of the safety filter is given below. 
 
-[TBU]
+```math
+\begin{aligned}
+& \underset{u} {\text{minimize}} &&\left\| u-u_{nom} \right\|^2 + k\delta^2\\
+&\text{s.t.} && \dot{h}(x, u)\ge  -\alpha \cdot h(x)-\delta\\
+& &&u_{min} \le u \le u_{max}\\
+& && 0 \le \delta \le \inf
+\end{aligned}
+```
+where $u_{nom}$ is the nominal control input given by user. $u=[u_x, u_y]$ is the output of safety filter. $x=[p_x, p_y]^T$ is the X and Y position of the robot. $h(x)$ is the control barrier function. $\delta$ is the slack variable.
+
+The dynamic of the robot is as follow.
+```math
+\dot{x}=
+\begin{bmatrix}
+\dot{p_x} \\
+\dot{p_y}
+\end{bmatrix}
+=
+\begin{bmatrix}
+u_x \\
+u_y
+\end{bmatrix}\\
+```
 
 ## References
-- https://qiita.com/seria_hina/items/afd96b930ade860926bc
-- https://ucb-ee106.github.io/106b-sp23site/ (Week 10 - Finishing Grasping, CBFs)
+- [制御バリア関数(CBF)を使えるようになろう](https://qiita.com/seria_hina/items/afd96b930ade860926bc)
+- [EECS C106B/206B Robotic Manipulation and Interaction, Spring 2023](https://ucb-ee106.github.io/106b-sp23site/) (Week 10 - Finishing Grasping, CBFs)
+- Ames, Aaron D., et al. "Control barrier functions: Theory and applications." 2019 18th European control conference (ECC). IEEE, 2019. ([arxiv](https://arxiv.org/abs/1903.11199))
