@@ -44,13 +44,13 @@ The safety filter based on CBF-QP aims to modify a user's command (desired contr
 
 ```math
 \begin{aligned}
-& \underset{u} {\text{minimize}} &&\left\| u-u_{nom} \right\|^2 + k\delta^2\\
+& \underset{u, \delta} {\text{minimize}} &&\left\| u-u_{nom} \right\|^2 + k\cdot\delta^2\\
 &\text{s.t.} && \dot{h}(x, u)\ge  -\alpha \cdot h(x)-\delta\\
 & &&u_{min} \le u \le u_{max}\\
 & && 0 \le \delta \le \inf
 \end{aligned}
 ```
-where $u_{nom}$ is the nominal control input given by user. $u=[u_x, u_y]$ is the output of safety filter. $x=[p_x, p_y]^T$ is the X and Y position of the robot. $h(x)$ is the control barrier function. $\delta$ is the slack variable.
+where $u_{nom}$ is the nominal control input given by user. $u=[u_x, u_y]$ is the output of safety filter. $x=[p_x, p_y]^T$ is the X and Y position of the robot. $h(x)$ is the control barrier function. $\delta$ is the slack variable. $k$ and $\alpha$ are parameter to be tuned.
 
 The dynamic of the robot is as follow.
 ```math
