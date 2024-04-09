@@ -24,10 +24,9 @@ Run `demo.py` to start the simulation. A simple version w/ code generation is pr
 python demo.py  # a PyGame window will be spawn
 ```
 
-Unit test can be executed through the following command
+Unit test can be executed through the following command.
 ```bash
 python -m unittest
-# ...........
 # ----------------------------------------------------------------------
 # Ran 11 tests in 0.000s
 # OK
