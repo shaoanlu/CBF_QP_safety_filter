@@ -4,12 +4,12 @@
 This Python program demonstrates the use of control barrier functions (CBFs) for safe robot control in a simple 2D environment. The program simulates a controllable green robot navigating through a scenario with stationary and patrolling robots. CBFs are employed to avoid collisions between the green robot and other robots in the environment. When safety filter is activated, it modified the user command to prevent collision while keeping the modification minimal.
 
 
-![](demo_safety_filter_off.gif) ![](demo_safety_filter_on.gif)
+![](assets/demo_safety_filter_off.gif) ![](assets/demo_safety_filter_on.gif)
 
 (Left: w/o safety filter; Right: w/ safety filter)
 
 ## Dependencies
-The program was develop[ed and tested in the following environment.
+The program was developed and tested in the following environment.
 - Python 3.6+
 - `torch==1.8.1+cpu` (optional)
 - `osqp==0.6.2.post8`
@@ -21,8 +21,18 @@ The program was develop[ed and tested in the following environment.
 ### Execution
 Run `demo.py` to start the simulation. A simple version w/ code generation is provided as `demo_codegen_osqp.py`.
 ```bash
-python demo.py  # or python demo_codegen_osqp.py
+python demo.py  # a PyGame window will be spawn
 ```
+
+Unit test can be executed through the following command
+```bash
+python -m unittest
+# ...........
+# ----------------------------------------------------------------------
+# Ran 11 tests in 0.000s
+# OK
+```
+
 ### Controls
 - `Arrow keys`: Control the green robot's movement.
 - `X`: Toggle CBF ON/OFF.
@@ -34,8 +44,8 @@ python demo.py  # or python demo_codegen_osqp.py
 ## Program Overview
 The program consists of the following classes and files:
 
-- `Robot`: A class in `robot.py` representing a robot in the environment. It includes methods for controlling the robot and detecting collisions.
-- `SimpleRobotDynamics`: A class in `models.py` defining the dynamics of the robot. It includes methods for calculating state transition, control barrier functions, and the derivatives of control barrier funcitons.
+- `robot.py`: Implements the `Robot` class representing a robot in the environment. It includes methods for controlling the robot and detecting collisions.
+- `models.py`: Implements the `SimpleRobotDynamics` class defining the dynamics of the robot. It includes methods for calculating state transition, control barrier functions, and the derivatives of control barrier funcitons.
 - `demo.py`: The entry point of the program that handles user input, robot movement, collision detection, and rendering.
 - `utils.py`: This file contains a helper function to draw the robots on the screen.
 

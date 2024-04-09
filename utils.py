@@ -1,10 +1,10 @@
 import pygame
-from robot import Robot
+from controllers.robot_cbf import RobotCBF
 
 
 def draw_robot(
     screen: pygame.Surface,
-    robot: Robot,
+    robot: RobotCBF,
     draw_filtered_command: bool = False,
     color1: tuple = (175, 175, 175),
     color2: tuple = (255, 0, 0),

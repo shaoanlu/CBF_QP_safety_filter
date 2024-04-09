@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from robot import Robot, K_LEFT, K_RIGHT, K_UP, K_DOWN
+from controllers.robot_cbf import RobotCBF, K_LEFT, K_RIGHT, K_UP, K_DOWN
 
 
 class DummySimpleRobotDynamics:
@@ -14,7 +14,7 @@ class DummySimpleRobotDynamics:
 class TestRobot(unittest.TestCase):
     def setUp(self):
         self.simple_robot_dynamics = DummySimpleRobotDynamics(np.array([0, 0]))
-        self.robot = Robot(self.simple_robot_dynamics)
+        self.robot = RobotCBF(self.simple_robot_dynamics)
 
     def test_init(self):
         self.assertEqual(self.robot.x, 0)
@@ -50,8 +50,8 @@ class TestRobot(unittest.TestCase):
         self.assertEqual(self.robot.uy, 0)
 
     def test_detect_collision(self):
-        obj1 = Robot(DummySimpleRobotDynamics(np.array([30, 0])))
-        obj2 = Robot(DummySimpleRobotDynamics(np.array([0, 70])))
+        obj1 = RobotCBF(DummySimpleRobotDynamics(np.array([30, 0])))
+        obj2 = RobotCBF(DummySimpleRobotDynamics(np.array([0, 70])))
         collision_objects = [obj1, obj2]
 
         self.robot.detect_collision(collision_objects)

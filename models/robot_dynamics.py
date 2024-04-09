@@ -2,8 +2,9 @@
 import numpy as np
 from typing import Union, List, Dict
 
+from models.i_model import ModelInterface
 
-class SimpleRobotDynamics:
+class SimpleRobotDynamics(ModelInterface):
     def __init__(self, x0: np.ndarray, xr: float = 0, yr: float = 0, size: int = 30) -> None:
         self.x = x0.astype(np.float64)  # xy positoin of the robot, shape(2,)
         self.xr = xr  # x position of the obstacle
