@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from models import SimpleRobotDynamics
+from models.robot_dynamics import SimpleRobotDynamics
 
 
 class TestSimpleRobotModel(unittest.TestCase):

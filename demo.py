@@ -2,8 +2,8 @@ import sys
 import pygame
 import numpy as np
 
-from models import SimpleRobotDynamics
-from robot import Robot
+from models.robot_dynamics import SimpleRobotDynamics
+from controllers.robot_cbf import RobotCBF
 from utils import draw_robot
 
 
@@ -16,10 +16,10 @@ def run():
     pygame.key.set_repeat(10)
 
     # init robots
-    auto_robot = Robot(SimpleRobotDynamics(x0=np.array([50, 350])), (0, 255, 0), vel=3)
-    static_robot = Robot(SimpleRobotDynamics(x0=np.array([120, 200])), (0, 0, 255), vel=0)
-    patrol_robot1 = Robot(SimpleRobotDynamics(x0=np.array([230, 300])), (0, 0, 255), vel=1)
-    patrol_robot2 = Robot(SimpleRobotDynamics(x0=np.array([300, 70])), (0, 0, 255), vel=1)
+    ego_robot = RobotCBF(SimpleRobotDynamics(x0=np.array([50, 350])), (0, 255, 0), vel=3)
+    static_robot = RobotCBF(SimpleRobotDynamics(x0=np.array([120, 200])), (0, 0, 255), vel=0)
+    patrol_robot1 = RobotCBF(SimpleRobotDynamics(x0=np.array([230, 300])), (0, 0, 255), vel=1)
+    patrol_robot2 = RobotCBF(SimpleRobotDynamics(x0=np.array([300, 70])), (0, 0, 255), vel=1)
     collision_objects = [static_robot, patrol_robot1, patrol_robot2]
 
     # init control configs
@@ -71,7 +71,7 @@ def run():
                     cbf_alphas.append(cbf_alphas.pop(0))  # roll left
                 if e.key == pygame.K_r:
                     # reset
-                    auto_robot.x, auto_robot.y = 50, 350
+                    ego_robot.x, ego_robot.y = 50, 350
                     static_robot.x, static_robot.y = 120, 200
                     patrol_robot1.x, patrol_robot1.y = 230, 300
                     patrol_robot2.x, patrol_robot2.y = 300, 70
@@ -81,7 +81,7 @@ def run():
 
         # move robots
         static_robot.control(None)
-        auto_robot.control(
+        ego_robot.control(
             pressed_key,
             use_cbf=use_cbf,
             cbf_alpha=cbf_alphas[0],
@@ -91,7 +91,7 @@ def run():
         patrol_robot1.control(
             direction_patrol_robot1,
             use_cbf=use_cbf_patrol_robots,
-            collision_objects=[auto_robot, static_robot, patrol_robot2]
+            collision_objects=[ego_robot, static_robot, patrol_robot2]
             if use_cbf_patrol_robots
             else [],
             force_direction_unchanged=cbf_force_direction_unchanged,
@@ -99,24 +99,24 @@ def run():
         patrol_robot2.control(
             direction_patrol_robot2,
             use_cbf=use_cbf_patrol_robots,
-            collision_objects=[auto_robot, static_robot, patrol_robot1]
+            collision_objects=[ego_robot, static_robot, patrol_robot1]
             if use_cbf_patrol_robots
             else [],
             force_direction_unchanged=cbf_force_direction_unchanged,
         )
 
         # detect collision
-        auto_robot.detect_collision(collision_objects=collision_objects)
+        ego_robot.detect_collision(collision_objects=collision_objects)
 
         # draw robots
         screen.fill((0, 0, 0))
         draw_robot(screen, static_robot)
         draw_robot(screen, patrol_robot1, draw_filtered_command=use_cbf_patrol_robots)
         draw_robot(screen, patrol_robot2, draw_filtered_command=use_cbf_patrol_robots)
-        draw_robot(screen, auto_robot, draw_filtered_command=use_cbf)
+        draw_robot(screen, ego_robot, draw_filtered_command=use_cbf)
 
         # draw texts
-        if auto_robot.is_collided:
+        if ego_robot.is_collided:
             screen.blit(text_surface, (230, 350))
         if use_cbf:
             screen.blit(cbf_on_text_surface, (0, 0))
