@@ -5,5 +5,5 @@ class ModelInterface:
         pass
 
     @abstractmethod
-    def foward(self):
+    def forward(self):
         raise NotImplementedError
