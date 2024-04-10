@@ -17,17 +17,23 @@ class TestRobotCBF(unittest.TestCase):
         self.robot = RobotCBF(self.simple_robot_dynamics)
 
     def test_init(self):
+        # XY position equals given initial value (0, 0)
         self.assertEqual(self.robot.x, 0)
         self.assertEqual(self.robot.y, 0)
 
     def test_update_positions(self):
-        ux, uy = 1, 1
-        self.robot._update_positions(ux, uy)
+        # Given new xY position 
+        new_x, new_y = 1, 1
+        # When update
+        self.robot._update_positions(new_x, new_y)
+        # Then new robot position equals exptected values
         self.assertEqual(self.robot.x, 1)
         self.assertEqual(self.robot.y, 1)
 
     def test_update_nominal_control(self):
+        # When update control command
         self.robot._update_nominal_control(K_LEFT)
+        # Then robot nominal control input equals the expected value
         self.assertEqual(self.robot.nominal_ux, -self.robot.vel)
         self.assertEqual(self.robot.nominal_uy, 0)
 
@@ -44,21 +50,27 @@ class TestRobotCBF(unittest.TestCase):
         self.assertEqual(self.robot.nominal_uy, self.robot.vel)
 
     def test_apply_nominal_control(self):
+        # When update and apply control command
         self.robot._update_nominal_control(K_LEFT)
         self.robot._apply_nominal_control()
+        # Then robot control input equals the expected value
         self.assertEqual(self.robot.ux, -self.robot.vel)
         self.assertEqual(self.robot.uy, 0)
 
     def test_detect_collision(self):
-        obj1 = RobotCBF(DummySimpleRobotDynamics(np.array([30, 0])))
-        obj2 = RobotCBF(DummySimpleRobotDynamics(np.array([0, 70])))
-        collision_objects = [obj1, obj2]
-
+        # Given two robots in the env
+        robot1 = RobotCBF(DummySimpleRobotDynamics(np.array([30, 0])))
+        robot2 = RobotCBF(DummySimpleRobotDynamics(np.array([0, 70])))
+        collision_objects = [robot1, robot2]
+        # When check collision (distance to robot1 <= robot_size = 30)
         self.robot.detect_collision(collision_objects)
+        # Then is_collided
         self.assertTrue(self.robot.is_collided)
 
+        # When check collision (distance to all robots > robot_size)
         self.robot._update_positions(100, 0)
         self.robot.detect_collision(collision_objects)
+        # Then no collision
         self.assertFalse(self.robot.is_collided)
 
 

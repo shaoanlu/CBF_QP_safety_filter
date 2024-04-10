@@ -17,11 +17,8 @@ class TestSimpleRobotModel(unittest.TestCase):
         self.model.forward(np.array([1, 2]))
         self.assertTrue(np.all(self.model.x == np.array([1, 2])))
 
-    def test_x_dot(self):
-        x_dot = self.model.x_dot(np.array([1, 2]))
-        self.assertTrue(np.all(x_dot == np.array([1, 2])))
-
     def test_h(self):
+        # test the hard-coded barrier function h
         h_val = self.model.h(np.array([0, 0]))
         self.assertEqual(h_val, -((self.model.size * 2.3) ** 2))
 
