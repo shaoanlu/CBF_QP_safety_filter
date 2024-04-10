@@ -69,7 +69,7 @@ class RobotCBF(ControllerInterface):
         self.nominal_ux, self.nominal_uy = 0, 0
 
         # get user command
-        self.(key)
+        self._update_nominal_control(key)
 
         # get cbf filtered command
         if use_cbf:
