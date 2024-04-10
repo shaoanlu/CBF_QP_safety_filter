@@ -3,6 +3,7 @@ import pygame
 import numpy as np
 
 from models.robot_dynamics import SimpleRobotDynamics
+from controllers.i_controller import ControllerInterface
 from controllers.robot_cbf import RobotCBF
 from utils import draw_robot
 
@@ -16,10 +17,18 @@ def run():
     pygame.key.set_repeat(10)
 
     # init robots
-    ego_robot = RobotCBF(SimpleRobotDynamics(x0=np.array([50, 350])), (0, 255, 0), vel=3)
-    static_robot = RobotCBF(SimpleRobotDynamics(x0=np.array([120, 200])), (0, 0, 255), vel=0)
-    patrol_robot1 = RobotCBF(SimpleRobotDynamics(x0=np.array([230, 300])), (0, 0, 255), vel=1)
-    patrol_robot2 = RobotCBF(SimpleRobotDynamics(x0=np.array([300, 70])), (0, 0, 255), vel=1)
+    ego_robot: ControllerInterface = RobotCBF(
+        SimpleRobotDynamics(x0=np.array([50, 350])), (0, 255, 0), vel=3
+    )
+    static_robot: ControllerInterface = RobotCBF(
+        SimpleRobotDynamics(x0=np.array([120, 200])), (0, 0, 255), vel=0
+    )
+    patrol_robot1: ControllerInterface = RobotCBF(
+        SimpleRobotDynamics(x0=np.array([230, 300])), (0, 0, 255), vel=1
+    )
+    patrol_robot2: ControllerInterface = RobotCBF(
+        SimpleRobotDynamics(x0=np.array([300, 70])), (0, 0, 255), vel=1
+    )
     collision_objects = [static_robot, patrol_robot1, patrol_robot2]
 
     # init control configs
