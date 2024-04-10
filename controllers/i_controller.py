@@ -6,9 +6,9 @@ class ControllerInterface:
         pass
 
     @abstractmethod
-    def control(self):
+    def control(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    def detect_collision(self):
+    def detect_collision(self, *args, **kwargs):
         raise NotImplementedError
