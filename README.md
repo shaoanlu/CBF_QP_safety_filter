@@ -53,7 +53,7 @@ The safety filter based on CBF-QP aims to modify a user's command (desired contr
 
 ```math
 \begin{aligned}
-& \underset{u, \delta} {\text{minimize}} &&\left\| u-u_{nom} \right\|^2 + k\cdot\delta^2\\
+& \underset{u, \delta} {\text{minimize}} &&\left\| u-u_{nom} \right\|^2 + k\cdot\delta\\
 &\text{s.t.} && \dot{h}(x, u)\ge  -\alpha \cdot h(x)-\delta\\
 & &&u_{min} \le u \le u_{max}\\
 & && 0 \le \delta \le \inf

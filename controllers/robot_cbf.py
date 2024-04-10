@@ -22,6 +22,11 @@ class RobotCBF(ControllerInterface):
         vel: float = 3,
         size: int = 30,
     ):
+        """
+        A controller for a robot using Control Barrier Functions (CBF) as
+        a safety filter for collision prevention. The CBF modifies user commands
+        ensuring safety without significantly deviating from the intended movement.
+        """
         self.model = model
         self.ux = 0  # actual control input
         self.uy = 0  # actual control input
@@ -58,10 +63,13 @@ class RobotCBF(ControllerInterface):
         penalty_slack: float = 10,
         collision_objects: list = [],
     ):
+        """
+        Processes control inputs, applies CBF for safety if enabled, and updates the robot's position.
+        """
         self.nominal_ux, self.nominal_uy = 0, 0
 
         # get user command
-        self._update_nominal_control(key)
+        self.(key)
 
         # get cbf filtered command
         if use_cbf:
@@ -80,6 +88,9 @@ class RobotCBF(ControllerInterface):
         self._update_positions(self.ux, self.uy)
 
     def _apply_nominal_control(self):
+        """
+        Applies nominal control inputs (user inputs) directly to the robot without safety adjustments.
+        """
         self.ux, self.uy = self.nominal_ux, self.nominal_uy
 
     def _update_positions(self, ux: float, uy: float):
@@ -87,6 +98,9 @@ class RobotCBF(ControllerInterface):
         self.model.forward(model_control)
 
     def _update_nominal_control(self, key: int):
+        """
+        Updates nominal control inputs based on user key input.
+        """
         ux, uy = 0, 0
         if key is not None:
             if key == K_LEFT:
@@ -111,7 +125,7 @@ class RobotCBF(ControllerInterface):
         """
         Calculate the safe command by solveing the following optimization problem
 
-                    minimize  || u - u_nom ||^2 + k * δ^2
+                    minimize  || u - u_nom ||^2 + k * δ
                       u, δ
                     s.t.
                             h'(x) ≥ -𝛼 * h(x) - δ
@@ -190,8 +204,8 @@ class RobotCBF(ControllerInterface):
         # l: shape (nh+nx,)
         # u: shape (nh+nx,)
         # (nx: number of state; nh: number of control barrier functions)
-        P = sparse.csc_matrix([[1, 0, 0], [0, 1, 0], [0, 0, penalty_slack]])
-        q = np.array([-ux, -uy, 0])
+        P = sparse.csc_matrix([[1, 0, 0], [0, 1, 0], [0, 0, 0]])
+        q = np.array([-ux, -uy, penalty_slack])
         A = sparse.csc_matrix([c for c in coeffs_dhdx] + [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         if force_direction_unchanged:
             l = np.array([-cbf_alpha * h_ for h_ in h] + [np.minimum(ux, 0), np.minimum(uy, 0), 0])
