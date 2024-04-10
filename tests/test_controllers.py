@@ -11,7 +11,7 @@ class DummySimpleRobotDynamics:
         self.x += u
 
 
-class TestRobot(unittest.TestCase):
+class TestRobotCBF(unittest.TestCase):
     def setUp(self):
         self.simple_robot_dynamics = DummySimpleRobotDynamics(np.array([0, 0]))
         self.robot = RobotCBF(self.simple_robot_dynamics)
