@@ -3,7 +3,7 @@ from scipy import sparse
 import osqp
 from typing import Optional
 
-from models.robot_dynamics import SimpleRobotDynamics
+from models.i_model import ModelInterface
 from controllers.i_controller import ControllerInterface
 
 
@@ -17,7 +17,7 @@ K_DOWN = 1073741905
 class RobotCBF(ControllerInterface):
     def __init__(
         self,
-        model: SimpleRobotDynamics,
+        model: ModelInterface,
         color: tuple = (0, 0, 255),
         vel: float = 3,
         size: int = 30,
