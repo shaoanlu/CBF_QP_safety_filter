@@ -43,8 +43,8 @@ python -m unittest
 ## Program Overview
 The program consists of the following classes and files:
 
-- `robot.py`: Implements the `Robot` class representing a robot in the environment. It includes methods for controlling the robot and detecting collisions.
-- `models.py`: Implements the `SimpleRobotDynamics` class defining the dynamics of the robot. It includes methods for calculating state transition, control barrier functions, and the derivatives of control barrier funcitons.
+- `cotrollers/robot_cbf.py`: Implements the `RobotCBF` class representing a robot in the environment. It includes methods for controlling the robot and detecting collisions.
+- `models/robot_dynamics.py`: Implements the `SimpleRobotDynamics` class defining the dynamics of the robot. It includes methods for calculating state transition, control barrier functions, and the derivatives of control barrier funcitons.
 - `demo.py`: The entry point of the program that handles user input, robot movement, collision detection, and rendering.
 - `utils.py`: This file contains a helper function to draw the robots on the screen.
 
