@@ -81,7 +81,8 @@ where $u_{nom}$ is the nominal control input given by user. $u=[u_x, u_y]$ is th
 
 The dynamic of the robot is as follow.
 ```math
-\dot{x}=
+$$
+\dot{x} =
 \begin{bmatrix}
 \dot{p_x} \\
 \dot{p_y}
@@ -90,7 +91,8 @@ The dynamic of the robot is as follow.
 \begin{bmatrix}
 u_x \\
 u_y
-\end{bmatrix}\\
+\end{bmatrix}
+$$
 ```
 
 ## References
