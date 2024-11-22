@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  cbf_qp_playground:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cbf_qp_playground
+    ports:
+      - "8000:8000" # Adjust if any other port mapping is necessary
+    volumes:
+      - .:/app
+      - /tmp/.X11-unix:/tmp/.X11-unix # Share the X11 socket for GUI rendering
+    environment:
+      - DISPLAY=${DISPLAY} # Pass the host's display to the container
+      - SDL_VIDEODRIVER=x11 # Use X11 for PyGame
+    stdin_open: true
+    tty: true

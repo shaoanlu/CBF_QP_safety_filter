@@ -10,15 +10,28 @@ This Python program demonstrates the use of control barrier functions (CBFs) for
 
 ## Dependencies
 The program was developed and tested in the following environment.
-- Python 3.6+
+- Python 3.9+
 - `torch==1.8.1+cpu` (optional)
-- `osqp==0.6.2.post8`
-- `pygame==2.3.0`
-- `numpy==1.16.6`
-- `scipy==1.1.0`
+- `osqp==0.6.7`
+- `pygame==2.6.1`
+- `numpy==1.26.4`
+- `scipy==1.13.1`
 
 ## Usage
-### Execution
+### Execution in docker container (recommended)
+First, install Docker and Docker Compose using the [official install guide](https://docs.docker.com/engine/install/ubuntu/).
+
+Then, clone this repository and go into the project folder
+```bash
+git clone https://github.com/shaoanlu/CBF_QP_safety_filter.git
+cd CBF_QP_safety_filter
+```
+To run the application, build the docker image and launch the container
+```bash
+docker compose up --build
+```
+
+### Execution in local environment
 Run `demo.py` to start the simulation. A simple version w/ code generation is provided as `demo_codegen_osqp.py`.
 ```bash
 python demo.py  # a PyGame window will be spawn
