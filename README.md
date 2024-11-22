@@ -31,6 +31,11 @@ To run the application, build the docker image and launch the container
 docker compose up --build
 ```
 
+To stop the container, execute the following command
+```bash
+docker compose down
+```
+
 ### Execution in local environment
 Run `demo.py` to start the simulation. A simple version w/ code generation is provided as `demo_codegen_osqp.py`.
 ```bash
