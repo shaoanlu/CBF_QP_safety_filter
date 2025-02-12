@@ -189,7 +189,7 @@ class RobotCBF(ControllerInterface):
         return h, coeffs_dhdx
 
     def _calculate_composite_h_and_coeffs_dhdx(self, collision_objects: list, cbf_alpha: float):
-        def log_sump_exp(x):
+        def log_sum_exp(x):
             return np.log(np.sum(np.exp(x), axis=0))
 
         if len(collision_objects) == 0:
@@ -197,12 +197,12 @@ class RobotCBF(ControllerInterface):
 
         h = []
         coeffs_dhdx = []
-        kappa, dist_buffer = 1e-1 * cbf_alpha, self.size * 1.3
+        kappa, dist_buffer = 5e-2 * cbf_alpha, self.size * 1.3
         x0 = np.array([self.x, self.y])
         lidar_points = np.array(collision_objects)
         hi_x = np.linalg.norm(x0 - lidar_points, axis=1) ** 2 - dist_buffer**2
         assert hi_x.shape == (len(lidar_points),), hi_x
-        h_x = -1 / kappa * log_sump_exp(-kappa * hi_x)  # beware of numerical error due to exponent
+        h_x = -1 / kappa * log_sum_exp(-kappa * hi_x)  # beware of numerical error due to exponent
         dhdx = np.sum(np.exp(-kappa * (hi_x - h_x))[..., None] * (-2 * lidar_points + 2 * x0), axis=0)
         # h_x = -1 / kappa * log_sump_exp(-kappa * np.tanh(hi_x))  # scale to prevent numerical error
         # dhdx = np.sum(
