@@ -6,7 +6,9 @@ This Python program demonstrates the use of control barrier functions (CBFs) for
 
 ![](assets/demo_safety_filter_off.gif) ![](assets/demo_safety_filter_on.gif) ![](assets/demo_composite_safety_filter_on.gif)
 
-(Left: w/o safety filter; Middle: w/ safety filter using GT position; Right: w/ safety filter using lidar points)
+- Left: w/o safety filter
+- Middle: w/ safety filter using GT position
+- Right: w/ safety filter using lidar points
 
 ## Dependencies
 The program was developed and tested in the following environment.
