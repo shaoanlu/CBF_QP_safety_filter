@@ -133,7 +133,7 @@ The original code is refactored for better encapsulation, modularity, and mainta
 from dataclasses import dataclass
 from typing import List
 
-@dataclass(kw_only=True)
+@dataclass
 class GameState:
     use_cbf: bool = False
     cbf_force_direction_unchanged: bool = False

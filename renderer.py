@@ -4,7 +4,7 @@ import pygame
 from controllers.i_controller import ControllerInterface
 
 
-@dataclass(kw_only=True)
+@dataclass
 class UIConfig:
     fps: int = 100
     window_width: int = 340
@@ -16,7 +16,12 @@ class UIConfig:
 
     def __post_init__(self):
         if self.status_text_positions is None:
-            self.status_text_positions = {"cbf_status": (0, 0), "cbf_alpha": (0, 15), "cbf_config": (0, 30)}
+            self.status_text_positions = {
+                "cbf_status": (0, 0),
+                "cbf_alpha": (0, 15),
+                "cbf_config": (0, 30),
+                "lidar_config": (0, 45),
+            }
 
 
 class GameRenderer:
@@ -83,6 +88,36 @@ class GameRenderer:
         else:
             self.screen.blit(self.cbf_off_text, self.config.status_text_positions["cbf_status"])
 
+    def draw_lidar_points(self, robot, detected_points: List[Tuple[int, int]]) -> None:
+        """Draw detected lidar points."""
+        if len(detected_points) <= 3:  # Use original method for small number of points
+            for point in detected_points:
+                pygame.draw.circle(self.screen, (120, 60, 26), (point[0], point[1]), 4)
+                pygame.draw.circle(self.screen, (235, 122, 52), (point[0], point[1]), 3)
+        else:  # Use surface arrays for large number of points
+            # Create a temporary surface for the points with same size as screen
+            points_surface = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+
+            # Create small template surfaces for outer and inner circles
+            template_size = 11  # Diameter of outer circle (5*2 + 1) to ensure we capture the full circle
+            outer_template = pygame.Surface((template_size, template_size), pygame.SRCALPHA)
+            inner_template = pygame.Surface((template_size, template_size), pygame.SRCALPHA)
+
+            # Draw template circles centered on their surfaces
+            center_pos = (template_size // 2, template_size // 2)
+            pygame.draw.circle(outer_template, (120, 60, 26), center_pos, 4)
+            pygame.draw.circle(inner_template, (235, 122, 52), center_pos, 3)
+
+            # Blit templates for each point
+            for x, y in detected_points:
+                # Calculate position to blit while accounting for template center offset
+                pos = (x - template_size // 2, y - template_size // 2)
+                points_surface.blit(outer_template, pos)
+                points_surface.blit(inner_template, pos)
+
+            # Blit the entire surface of points to the screen
+            self.screen.blit(points_surface, (0, 0))
+
     def _draw_cbf_enabled_status(self, game_state) -> None:
         """Draw detailed CBF status when enabled."""
         # Draw CBF ON status
@@ -96,12 +131,20 @@ class GameRenderer:
 
         # Draw CBF configuration
         config_text = self.small_font.render(
-            f"Fixed dir. {game_state.cbf_force_direction_unchanged}, "
-            f"CBF patrols {game_state.use_cbf_patrol_robots} (c/v)",
+            f"Fixed dir: {game_state.cbf_force_direction_unchanged}, "
+            f"CBF patrols: {game_state.use_cbf_patrol_robots} (c/v)",
             False,
             (0, 255, 125),
         )
         self.screen.blit(config_text, self.config.status_text_positions["cbf_config"])
+
+        # Draw lidar configuration
+        config_text = self.small_font.render(
+            f"Simulate lidar: {game_state.use_lidar_sensor}",
+            False,
+            (0, 255, 125),
+        )
+        self.screen.blit(config_text, self.config.status_text_positions["lidar_config"])
 
     def update_display(self) -> None:
         """Update the display and maintain a fixed frame rate of 100 FPS."""

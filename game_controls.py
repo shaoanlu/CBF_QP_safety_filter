@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Callable
+from typing import Any, Dict, Optional, List, Callable
 import pygame
 import sys
 from enum import Enum, auto
@@ -9,19 +9,21 @@ class GameEvent(Enum):
     TOGGLE_CBF = auto()
     TOGGLE_CBF_DIRECTION = auto()
     TOGGLE_CBF_PATROL = auto()
-    TOGGLE_LIDAR_SENSOR = auto()
+    TOGGLE_LIDAR_SIMULATION = auto()
     CYCLE_CBF_ALPHA = auto()
     RESET_SIMULATION = auto()
     QUIT = auto()
 
 
-@dataclass(kw_only=True)
+@dataclass
 class GameState:
     use_cbf: bool = False
+    use_lidar_sensor: bool = False
     cbf_force_direction_unchanged: bool = False
     use_cbf_patrol_robots: bool = False
     cbf_alphas: List[float] = None
     current_alpha_idx: int = 0
+    count: int = 0
 
     def __post_init__(self):
         if self.cbf_alphas is None:
@@ -40,9 +42,9 @@ class InputHandler:
             pygame.K_v: GameEvent.TOGGLE_CBF_PATROL,
             pygame.K_z: GameEvent.CYCLE_CBF_ALPHA,
             pygame.K_r: GameEvent.RESET_SIMULATION,
-            pygame.K_s: GameEvent.TOGGLE_LIDAR_SENSOR,
+            pygame.K_s: GameEvent.TOGGLE_LIDAR_SIMULATION,
         }
-        self._event_handlers = {}
+        self._event_handlers: Dict[GameEvent, Callable] = {}
         self._pressed_movement_key: Optional[int] = None
 
     def register_event_handler(self, event: GameEvent, handler: Callable) -> None:
@@ -96,6 +98,10 @@ class GameStateManager:
         self.input_handler.register_event_handler(
             GameEvent.TOGGLE_CBF_PATROL,
             lambda: setattr(self.state, "use_cbf_patrol_robots", not self.state.use_cbf_patrol_robots),
+        )
+        self.input_handler.register_event_handler(
+            GameEvent.TOGGLE_LIDAR_SIMULATION,
+            lambda: setattr(self.state, "use_lidar_sensor", not self.state.use_lidar_sensor),
         )
         self.input_handler.register_event_handler(GameEvent.CYCLE_CBF_ALPHA, self._cycle_cbf_alpha)
 

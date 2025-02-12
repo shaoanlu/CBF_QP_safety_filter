@@ -4,6 +4,7 @@ import numpy as np
 
 from game_controls import GameStateManager, GameEvent
 from models.robot_dynamics import SimpleRobotDynamics
+from sensors.lidar import simulate_2d_lidar_scan, create_obstacle_binary_map
 from controllers.i_controller import ControllerInterface
 from controllers.robot_cbf import RobotCBF
 from renderer import GameRenderer, UIConfig
@@ -36,27 +37,45 @@ def run():
         static_robot.x, static_robot.y = 120, 200
         patrol_robot1.x, patrol_robot1.y = 230, 300
         patrol_robot2.x, patrol_robot2.y = 300, 70
+        game_state.count = 0
 
     game_manager.input_handler.register_event_handler(GameEvent.RESET_SIMULATION, reset_simulation)
+    game_state = game_manager.state
 
     # init control configs
-    count = 0
     direction_patrol_robot1 = pygame.K_UP
     direction_patrol_robot2 = pygame.K_LEFT
 
     # main loop
     while True:
-        count += 1
+        game_state.count += 1
 
         # flip moving direction of patrol robots
-        if count % 150 == 0:
+        if game_state.count % 150 == 0:
             direction_patrol_robot1 = pygame.K_DOWN if (direction_patrol_robot1 == pygame.K_UP) else pygame.K_UP
             direction_patrol_robot2 = pygame.K_RIGHT if (direction_patrol_robot2 == pygame.K_LEFT) else pygame.K_LEFT
-        count = 0 if count >= 1e10 else count
+        game_state.count = 0 if game_state.count >= 1e10 else game_state.count
 
         # Process input
         pressed_key = game_manager.process_input()
         game_state = game_manager.state
+
+        # Update lidar sensor
+        lidar_points = []
+        if game_state.use_lidar_sensor:
+            grid_map = create_obstacle_binary_map(
+                width=WINDOW_WIDTH,
+                height=WINDOW_HEIGHT,
+                centers=[(obj_.x, obj_.y) for obj_ in collision_objects],
+                radii=[obj_.size for obj_ in collision_objects],
+            )
+            lidar_points = simulate_2d_lidar_scan(
+                grid_map=grid_map,
+                position=(ego_robot.x, ego_robot.y),
+                angular_resolution=5 * np.pi / 180,  # 1 degree
+                max_range=150.0,
+            )
+            lidar_points = [np.asarray(x) for x in set(lidar_points)]
 
         # move robots
         static_robot.control(None)
@@ -84,6 +103,7 @@ def run():
         # Render frame
         renderer.clear_screen()
         renderer.draw_robots(ego_robot, static_robot, patrol_robots, game_state)
+        renderer.draw_lidar_points(ego_robot, lidar_points)
         renderer.draw_collision_warning(ego_robot.is_collided)
         renderer.draw_cbf_status(game_state)
         renderer.update_display()

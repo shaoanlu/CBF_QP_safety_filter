@@ -56,6 +56,7 @@ python -m unittest
 - `Z`: Cycle through different CBF alpha values.
 - `C`: Change the settings of constraints on filtered control.
 - `V`: Enable/Disable safety filter of blue robots.
+- `S`: Enable/Disable simulated lidar sensor.
 - `R`: Reset robot positions.
 
 ## Program Overview
