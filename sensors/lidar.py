@@ -100,4 +100,9 @@ def create_obstacle_binary_map(
 
     grid = np.ones((height, width), dtype=int)
     grid = draw_circle(grid, centers, radii)
+
+    grid[:3, :] = 0
+    grid[-3:, :] = 0
+    grid[:, :3] = 0
+    grid[:, -3:] = 0
     return grid
