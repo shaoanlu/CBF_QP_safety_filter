@@ -38,7 +38,7 @@
         ...
 ```
 
-## ## Step-by-Step Refactoring Process (Claude)
+## Step-by-Step Refactoring Process (Claude)
 1. First, Identify Problems in Original Code
     - The original code mixes input handling, state management, and game logic in one big loop
     - State variables are scattered (use_cbf, cbf_force_direction_unchanged, etc.)
@@ -150,9 +150,9 @@ class GameState:
         return self.cbf_alphas[self.current_alpha_idx]
 ```
 #### Why?
-✅ **Encapsulation** – Groups related state variables into a single class.
-✅ **Avoids Global Variables** – Keeps state management centralized.
-✅ **Provides Computed Properties** – `current_alpha` dynamically retrieves the active alpha value.
+- ✅ **Encapsulation** – Groups related state variables into a single class.
+- ✅ **Avoids Global Variables** – Keeps state management centralized.
+- ✅ **Provides Computed Properties** – `current_alpha` dynamically retrieves the active alpha value.
 
 ### Step 2: Extract Input Handling Logic (`InputHandler`)
 #### Before Refactoring
@@ -217,11 +217,11 @@ class InputHandler:
             self._event_handlers[event]()
 ```
 #### Why?
-✅ **Decouples** Input from Game Logic – Now `InputHandler` only processes input, while another class manages state updates.
-✅ **Extensible** – New key mappings or event handlers can be added dynamically.
-✅ **More Maintainable** – Each function has a _single responsibility_.
+- ✅ **Decouples** Input from Game Logic – Now `InputHandler` only processes input, while another class manages state updates.
+- ✅ **Extensible** – New key mappings or event handlers can be added dynamically.
+- ✅ **More Maintainable** – Each function has a _single responsibility_.
 
-###Step 3: Create a GameState Manager (GameStateManager)
+### Step 3: Create a GameState Manager (GameStateManager)
 #### Before Refactoring
 - Input handling and game state modifications are interleaved inside the loop.
 - The reset logic is inline, making it hard to reuse.
@@ -267,9 +267,9 @@ class GameStateManager:
         return self.input_handler.get_movement_key()
 ```
 #### Why?
-✅ **Centralized State Management** – `GameStateManager` ensures a single source of truth for state updates.
-✅ **Reusable Reset Logic** – `_reset_simulation()` reinitializes `GameState` cleanly.
-✅ **Encapsulation** – Input handling (`InputHandler`) and state transitions (`GameStateManager`) are clearly separated.
+- ✅ **Centralized State Management** – `GameStateManager` ensures a single source of truth for state updates.
+- ✅ **Reusable Reset Logic** – `_reset_simulation()` reinitializes `GameState` cleanly.
+- ✅ **Encapsulation** – Input handling (`InputHandler`) and state transitions (`GameStateManager`) are clearly separated.
 
 ### Step 4: Refactor the Main Loop
 #### Before Refactoring
@@ -292,7 +292,7 @@ while True:
     # Movement logic can use `pressed_key` if needed
 ```
 #### Why?
-✅ Simpler Main Loop – Focuses only on high-level operations.
-✅ Separation of Concerns – Delegates event handling and state changes to dedicated classes.
-✅ Better Readability – Clearly structured execution flow.
+- ✅ Simpler Main Loop – Focuses only on high-level operations.
+- ✅ Separation of Concerns – Delegates event handling and state changes to dedicated classes.
+- ✅ Better Readability – Clearly structured execution flow.
 
