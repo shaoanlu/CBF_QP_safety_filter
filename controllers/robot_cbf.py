@@ -153,7 +153,7 @@ class RobotCBF(ControllerInterface):
         if not is_lidar_simulation:
             h, coeffs_dhdx = self._calculate_h_and_coeffs_dhdx(collision_objects)
         else:
-            h, coeffs_dhdx = self._calculate_composite_h_and_coeffs_dhdx(collision_objects)
+            h, coeffs_dhdx = self._calculate_composite_h_and_coeffs_dhdx(collision_objects, cbf_alpha)
 
         # Define problem data
         P, q, A, l, u = self._define_QP_problem_data(
@@ -188,7 +188,7 @@ class RobotCBF(ControllerInterface):
             # coeffs_dhdx.append([2 * self.x - 2 * obj.x, 2 * self.y - 2 * obj.y, penalty_slack])
         return h, coeffs_dhdx
 
-    def _calculate_composite_h_and_coeffs_dhdx(self, collision_objects: list):
+    def _calculate_composite_h_and_coeffs_dhdx(self, collision_objects: list, cbf_alpha: float):
         def log_sump_exp(x):
             return np.log(np.sum(np.exp(x), axis=0))
 
@@ -197,18 +197,19 @@ class RobotCBF(ControllerInterface):
 
         h = []
         coeffs_dhdx = []
-        kappa, dist_buffer = 1e-3, self.size * 0.3
+        kappa, dist_buffer = 1e-1 * cbf_alpha, self.size * 1.3
         x0 = np.array([self.x, self.y])
         lidar_points = np.array(collision_objects)
         hi_x = np.linalg.norm(x0 - lidar_points, axis=1) ** 2 - dist_buffer**2
         assert hi_x.shape == (len(lidar_points),), hi_x
         h_x = -1 / kappa * log_sump_exp(-kappa * hi_x)  # beware of numerical error due to exponent
-        # h_x = -1 / kappa * log_sump_exp(-kappa * np.tanh(hi_x))  # scale to prevent numerical error
         dhdx = np.sum(np.exp(-kappa * (hi_x - h_x))[..., None] * (-2 * lidar_points + 2 * x0), axis=0)
+        # h_x = -1 / kappa * log_sump_exp(-kappa * np.tanh(hi_x))  # scale to prevent numerical error
         # dhdx = np.sum(
         #     np.exp(-kappa * (hi_x - h_x))[..., None] * 2 * (x0 - lidar_points) / (np.cosh(hi_x)[..., None] ** 2),
         #     axis=0,
-        # )
+        # )  # this drivative is buggy
+        print(h_x)
         assert dhdx.shape == (2,), dhdx
         h.append(h_x)
         coeffs_dhdx.append([dhdx[0], dhdx[1], 1])
