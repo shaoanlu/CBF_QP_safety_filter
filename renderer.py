@@ -4,7 +4,7 @@ import pygame
 from controllers.i_controller import ControllerInterface
 
 
-@dataclass
+@dataclass(kw_only=True)
 class UIConfig:
     fps: int = 100
     window_width: int = 340

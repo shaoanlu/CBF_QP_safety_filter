@@ -9,12 +9,13 @@ class GameEvent(Enum):
     TOGGLE_CBF = auto()
     TOGGLE_CBF_DIRECTION = auto()
     TOGGLE_CBF_PATROL = auto()
+    TOGGLE_LIDAR_SENSOR = auto()
     CYCLE_CBF_ALPHA = auto()
     RESET_SIMULATION = auto()
     QUIT = auto()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class GameState:
     use_cbf: bool = False
     cbf_force_direction_unchanged: bool = False
@@ -39,6 +40,7 @@ class InputHandler:
             pygame.K_v: GameEvent.TOGGLE_CBF_PATROL,
             pygame.K_z: GameEvent.CYCLE_CBF_ALPHA,
             pygame.K_r: GameEvent.RESET_SIMULATION,
+            pygame.K_s: GameEvent.TOGGLE_LIDAR_SENSOR,
         }
         self._event_handlers = {}
         self._pressed_movement_key: Optional[int] = None
