@@ -100,3 +100,5 @@ $$
 - [制御バリア関数(CBF)を使えるようになろう](https://qiita.com/seria_hina/items/afd96b930ade860926bc)
 - [EECS C106B/206B Robotic Manipulation and Interaction, Spring 2023](https://ucb-ee106.github.io/106b-sp23site/) (Week 10 - Finishing Grasping, CBFs)
 - Ames, Aaron D., et al. "Control barrier functions: Theory and applications." 2019 18th European control conference (ECC). IEEE, 2019. ([arxiv](https://arxiv.org/abs/1903.11199))
+- Harms, Marvin, Martin Jacquet, and Kostas Alexis. "Safe Quadrotor Navigation using Composite Control Barrier Functions." arXiv preprint arXiv:2502.04101 (2025).
+- Molnar, Tamas G., and Aaron D. Ames. "Composing control barrier functions for complex safety specifications." IEEE Control Systems Letters (2023).
