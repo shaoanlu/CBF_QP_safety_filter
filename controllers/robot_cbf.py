@@ -209,7 +209,6 @@ class RobotCBF(ControllerInterface):
         #     np.exp(-kappa * (hi_x - h_x))[..., None] * 2 * (x0 - lidar_points) / (np.cosh(hi_x)[..., None] ** 2),
         #     axis=0,
         # )  # this drivative is buggy
-        print(h_x)
         assert dhdx.shape == (2,), dhdx
         h.append(h_x)
         coeffs_dhdx.append([dhdx[0], dhdx[1], 1])
