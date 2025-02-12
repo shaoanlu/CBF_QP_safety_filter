@@ -62,6 +62,7 @@ class RobotCBF(ControllerInterface):
         cbf_alpha: float = 1e-1,
         penalty_slack: float = 10,
         collision_objects: list = [],
+        is_lidar_simulation: bool = False,
     ):
         """
         Processes control inputs, applies CBF for safety if enabled, and updates the robot's position.
@@ -80,6 +81,7 @@ class RobotCBF(ControllerInterface):
                 penalty_slack,
                 force_direction_unchanged,
                 collision_objects,
+                is_lidar_simulation,
             )
         else:
             self._apply_nominal_control()
@@ -121,6 +123,7 @@ class RobotCBF(ControllerInterface):
         penalty_slack: float,
         force_direction_unchanged: bool,
         collision_objects: list,
+        is_lidar_simulation: bool,
     ):
         """
         Calculate the safe command by solveing the following optimization problem
@@ -147,21 +150,18 @@ class RobotCBF(ControllerInterface):
 
         """
         # Calculate barrier values and coeffs in h_dot
-        h, coeffs_dhdx = self._calculate_h_and_coeffs_dhdx(collision_objects)
+        if not is_lidar_simulation:
+            h, coeffs_dhdx = self._calculate_h_and_coeffs_dhdx(collision_objects)
+        else:
+            h, coeffs_dhdx = self._calculate_composite_h_and_coeffs_dhdx(collision_objects)
 
         # Define problem data
         P, q, A, l, u = self._define_QP_problem_data(
             ux, uy, cbf_alpha, penalty_slack, h, coeffs_dhdx, force_direction_unchanged
         )
 
-        if self.prob is None:
-            # Create an OSQP object and setup workspace
-            self.prob = osqp.OSQP()
-            self.prob.setup(P, q, A, l, u, verbose=False, time_limit=0)
-        else:
-            # Update PqAlu matrices instead of instantiating a new object
-            # https://osqp.org/docs/examples/update-matrices.html
-            self.prob.update(q=q, l=l, u=u, Ax=A.data)
+        self.prob = osqp.OSQP()
+        self.prob.setup(P, q, A, l, u, verbose=False, time_limit=0)
 
         # Solve QP problem
         res = self.prob.solve()
@@ -186,6 +186,32 @@ class RobotCBF(ControllerInterface):
             # NOTE: To speedup computation, we can calculate dhdu offline and hardcoded it as below
             # h.append((self.x - obj.x) ** 2 + (self.y - obj.y) ** 2 - (self.size * 2.3) ** 2)
             # coeffs_dhdx.append([2 * self.x - 2 * obj.x, 2 * self.y - 2 * obj.y, penalty_slack])
+        return h, coeffs_dhdx
+
+    def _calculate_composite_h_and_coeffs_dhdx(self, collision_objects: list):
+        def log_sump_exp(x):
+            return np.log(np.sum(np.exp(x), axis=0))
+
+        if len(collision_objects) == 0:
+            return [1], [[0, 0, 1]]
+
+        h = []
+        coeffs_dhdx = []
+        kappa, dist_buffer = 1e-3, self.size * 0.3
+        x0 = np.array([self.x, self.y])
+        lidar_points = np.array(collision_objects)
+        hi_x = np.linalg.norm(x0 - lidar_points, axis=1) ** 2 - dist_buffer**2
+        assert hi_x.shape == (len(lidar_points),), hi_x
+        h_x = -1 / kappa * log_sump_exp(-kappa * hi_x)  # beware of numerical error due to exponent
+        # h_x = -1 / kappa * log_sump_exp(-kappa * np.tanh(hi_x))  # scale to prevent numerical error
+        dhdx = np.sum(np.exp(-kappa * (hi_x - h_x))[..., None] * (-2 * lidar_points + 2 * x0), axis=0)
+        # dhdx = np.sum(
+        #     np.exp(-kappa * (hi_x - h_x))[..., None] * 2 * (x0 - lidar_points) / (np.cosh(hi_x)[..., None] ** 2),
+        #     axis=0,
+        # )
+        assert dhdx.shape == (2,), dhdx
+        h.append(h_x)
+        coeffs_dhdx.append([dhdx[0], dhdx[1], 1])
         return h, coeffs_dhdx
 
     def _define_QP_problem_data(

@@ -72,7 +72,7 @@ def run():
             lidar_points = simulate_2d_lidar_scan(
                 grid_map=grid_map,
                 position=(ego_robot.x, ego_robot.y),
-                angular_resolution=5 * np.pi / 180,  # 1 degree
+                angular_resolution=5 * np.pi / 180,  # 3 degree
                 max_range=150.0,
             )
             lidar_points = [np.asarray(x) for x in set(lidar_points)]
@@ -83,8 +83,9 @@ def run():
             pressed_key,
             use_cbf=game_state.use_cbf,
             cbf_alpha=game_state.cbf_alphas[0],
-            collision_objects=collision_objects,
+            collision_objects=collision_objects if not game_state.use_lidar_sensor else lidar_points,
             force_direction_unchanged=game_state.cbf_force_direction_unchanged,
+            is_lidar_simulation=game_state.use_lidar_sensor,
         )
 
         # Update patrolling robots
