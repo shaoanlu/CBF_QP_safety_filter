@@ -38,30 +38,87 @@
         ...
 ```
 
-## Key improvements in the refactored code:
+## ## Step-by-Step Refactoring Process (Claude)
+1. First, Identify Problems in Original Code
+    - The original code mixes input handling, state management, and game logic in one big loop
+    - State variables are scattered (use_cbf, cbf_force_direction_unchanged, etc.)
+    - Event handling is done through direct key checks
+    - No clear separation of responsibilities
 
-1. Separation of Concerns:
-    - Input handling is now separated into dedicated classes
-    - Game state management is encapsulated in its own class
-    - Clear distinction between input processing and state management
+2. Design New Architecture
+```bash
+Original Structure:
+run() function
+├── Input handling (pygame.event.get())
+├── State variables
+└── Game loop with everything mixed
 
-2. Type Safety and Documentation:
-    - Uses type hints throughout the code
-    - Documentation strings for important methods
-    - Uses dataclasses for structured data
+New Structure:
+├── GameEvent (Enum) - Defines all possible game events
+├── GameState (Dataclass) - Holds all game state
+├── InputHandler - Handles keyboard input
+└── GameStateManager - Orchestrates everything
+```
+3. Create GameEvent Enum
+```python
+class GameEvent(Enum):
+    TOGGLE_CBF = auto()
+    TOGGLE_CBF_DIRECTION = auto()
+    TOGGLE_CBF_PATROL = auto()
+    CYCLE_CBF_ALPHA = auto()
+    RESET_SIMULATION = auto()
+    QUIT = auto()
+```
+This replaces direct key checks with semantic events, making the code more maintainable.
 
+4. Create GameState Class
+```python
+@dataclass
+class GameState:
+    use_cbf: bool = False
+    cbf_force_direction_unchanged: bool = False
+    use_cbf_patrol_robots: bool = False
+    cbf_alphas: List[float] = None
+    current_alpha_idx: int = 0
+```
+- Groups all related state variables together
+- Uses dataclass for clean initialization and type hints
+- Adds property for current_alpha to encapsulate logic
 
-3. Event-Driven Architecture:
-    - Implements an event system using enums
-    - Allows for easy registration of event handlers
-    - Makes the code more maintainable and extensible
+5. Create InputHandler Class
+```python
+class InputHandler:
+    def __init__(self):
+        self._key_event_map = {
+            pygame.K_x: GameEvent.TOGGLE_CBF,
+            pygame.K_c: GameEvent.TOGGLE_CBF_DIRECTION,
+            # ...
+        }
+```
+- Maps keyboard keys to GameEvents
+- Provides clean interface for event handling
+- Separates input handling from game logic
 
-4. Improved State Management:
-    - Game state is now properly encapsulated
-    - State changes are handled through dedicated methods
-    - Reduces the chance of state-related bugs
+6. Create GameStateManager Class
+```python
+class GameStateManager:
+    def __init__(self):
+        self.state = GameState()
+        self.input_handler = InputHandler()
+        self._setup_event_handlers()
+```
+- Acts as the orchestrator
+- Connects input events to state changes
+- Provides clean interface for main game loop
 
-## Step-by-Step Refactoring Process
+7. Benefits of Each Change:
+- Event Enum: Makes it clear what events exist in the system
+- GameState: Groups related state, enforces type safety
+- InputHandler: Separates input handling logic
+- GameStateManager: Provides clean interface to rest of game
+- Main Loop: Now focuses on game logic rather than implementation details
+
+## Step-by-Step Refactoring Process (ChatGPT)
 The original code is refactored for better encapsulation, modularity, and maintainability. Below is a step-by-step walkthrough of the changes.
 
 ### Step 1: Encapsulate State in a Class (`GameState`)
