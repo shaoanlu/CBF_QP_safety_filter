@@ -10,14 +10,17 @@ This Python program demonstrates the use of control barrier functions (CBFs) for
 - Middle: w/ safety filter using GT position
 - Right: w/ safety filter using lidar points
 
-## Dependencies
-The program was developed and tested in the following environment.
-- Python 3.9+
-- `torch==1.8.1+cpu` (optional)
-- `osqp==0.6.7`
-- `pygame==2.6.1`
-- `numpy==1.26.4`
-- `scipy==1.13.1`
+## Key Features
+#### CBF-QP Ssafety filter
+Implements a CBF-based optimization to minimally adjust control inputs, ensuring the robot remains within safe distance defined by the barrier function to prevent collision.
+#### Sumulated LiDAR
+Includes a 2D LiDAR sensor simulation that can be used instead of ground truth obstacle positions.
+#### Pygame visualization
+- Uses Pygame for visuallization, showing robots movements, the effect of the safety fiter, and (optionally) LiDAR scan points.
+#### Disturbance observer
+Integrates a disturbance observer of the barrier function, especially useful for handling moving obstacles.
+#### Docker support
+Provides a `Dockfile` and `docker-compose.yaml` for easy setup and execution.
 
 ## Usage
 ### Execution in docker container (recommended)
@@ -28,7 +31,7 @@ Then, clone this repository and go into the project folder
 git clone https://github.com/shaoanlu/CBF_QP_safety_filter.git
 cd CBF_QP_safety_filter
 ```
-To run the application, build the docker image and launch the container
+To run the application, build the docker image and launch the container (requires WSL2 if running on Windows due to support for GUI display)
 ```bash
 docker compose up --build
 ```
@@ -52,7 +55,7 @@ python -m unittest
 # OK
 ```
 
-### Controls
+### Game Controls
 - `Arrow keys`: Control the green robot's movement.
 - `X`: Toggle CBF ON/OFF.
 - `Z`: Cycle through different CBF alpha values.
@@ -61,12 +64,14 @@ python -m unittest
 - `S`: Enable/Disable simulated lidar sensor.
 - `R`: Reset robot positions.
 
-## Key Features
-- **CBF-QP Ssafety filter**: Implements a CBF-based optimization to minimally adjust control inputs, ensuring the robot remains within safe distance defined by the barrier function to prevent collision.
-- **Sumulated LiDAR**: Includes a 2D LiDAR sensor simulation that can be used instead of ground truth obstacle positions.
-- **Pygame visualization**: Uses Pygame for visuallization, showing robots movements, the effect of the safety fiter, and (optionally) LiDAR scan points.
-- **Disturbance observer**: Integrates a disturbance observer of the barrier function, especially useful for handling moving obstacles.
-- **Docker support**: Provides a `Dockfile` and `docker-compose.yaml` for easy setup and execution.
+## Dependencies
+The program was developed and tested in the following environment.
+- Python 3.9+
+- `torch==1.8.1+cpu` (optional)
+- `osqp==0.6.7`
+- `pygame==2.6.1`
+- `numpy==1.26.4`
+- `scipy==1.13.1`
 
 ## CBF-QP safety filter
 The safety filter based on CBF-QP aims to modify a user's command (desired control input) to satisfy system constraints while keeping the modification minimal. The optimization problem of the safety filter is given below. 
