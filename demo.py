@@ -109,6 +109,7 @@ def run():
                 use_cbf=game_state.use_cbf_patrol_robots,
                 collision_objects=(collision_list if game_state.use_cbf_patrol_robots else []),
                 force_direction_unchanged=game_state.cbf_force_direction_unchanged,
+                is_lidar_simulation=False,
             )
 
         # detect collision
