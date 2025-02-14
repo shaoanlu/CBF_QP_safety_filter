@@ -61,13 +61,12 @@ python -m unittest
 - `S`: Enable/Disable simulated lidar sensor.
 - `R`: Reset robot positions.
 
-## Program Overview
-The program consists of the following classes and files:
-
-- `controllers/robot_cbf.py`: Implements the `RobotCBF` class representing a robot in the environment. It includes methods for controlling the robot and detecting collisions.
-- `models/robot_dynamics.py`: Implements the `SimpleRobotDynamics` class defining the dynamics of the robot. It includes methods for calculating state transition, control barrier functions, and the derivatives of control barrier funcitons.
-- `demo.py`: The entry point of the program that handles user input, robot movement, collision detection, and rendering.
-- `utils.py`: This file contains a helper function to draw the robots on the screen.
+## Key Features
+- **CBF-QP Ssafety filter**: Implements a CBF-based optimization to minimally adjust control inputs, ensuring the robot remains within safe distance defined by the barrier function to prevent collision.
+- **Sumulated LiDAR**: Includes a 2D LiDAR sensor simulation that can be used instead of ground truth obstacle positions.
+- **Pygame visualization**: Uses Pygame for visuallization, showing robots movements, the effect of the safety fiter, and (optionally) LiDAR scan points.
+- **Disturbance observer**: Integrates a disturbance observer of the barrier function, especially useful for handling moving obstacles.
+- **Docker support**: Provides a `Dockfile` and `docker-compose.yaml` for easy setup and execution.
 
 ## CBF-QP safety filter
 The safety filter based on CBF-QP aims to modify a user's command (desired control input) to satisfy system constraints while keeping the modification minimal. The optimization problem of the safety filter is given below. 
