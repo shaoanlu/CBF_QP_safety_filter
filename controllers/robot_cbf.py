@@ -134,7 +134,7 @@ class RobotCBF(ControllerInterface):
         penalty_slack: float,
         force_direction_unchanged: bool,
         collision_objects: list,
-        is_lidar_simulation: bool,
+        is_lidar_simulation: bool = False,
         use_disturbance_observer: bool = True,
     ):
         """
