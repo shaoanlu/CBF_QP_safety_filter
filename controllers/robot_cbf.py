@@ -1,10 +1,16 @@
 import numpy as np
 from scipy import sparse
 import osqp
-from typing import Optional
+from typing import Optional, List, Tuple
 
 from models.i_model import ModelInterface
 from controllers.i_controller import ControllerInterface
+
+from controllers.disturbance_observer import (
+    BasicDisturbanceObserver,
+    DisturbanceObserver,
+    CautionAdamDisturbanceObserver,
+)
 
 
 # IDs for detecting arrow keypress in PyGame
@@ -38,6 +44,11 @@ class RobotCBF(ControllerInterface):
         self.is_collided = False
         self.prob = None
 
+        self.prev_h = None
+        # self.disturbance_observer = DisturbanceObserver(CautionAdamDisturbanceObserver(lr=1.0))
+        self.disturbance_observer = DisturbanceObserver(BasicDisturbanceObserver(gain=1.0))
+        self.disturbance = 0.0
+
     @property
     def x(self):
         return self.model.x[0]
@@ -62,7 +73,7 @@ class RobotCBF(ControllerInterface):
         cbf_alpha: float = 1e-1,
         penalty_slack: float = 10,
         collision_objects: list = [],
-        is_lidar_simulation: bool = False,
+        is_lidar_simulation: bool = True,
     ):
         """
         Processes control inputs, applies CBF for safety if enabled, and updates the robot's position.
@@ -124,6 +135,7 @@ class RobotCBF(ControllerInterface):
         force_direction_unchanged: bool,
         collision_objects: list,
         is_lidar_simulation: bool,
+        use_disturbance_observer: bool = True,
     ):
         """
         Calculate the safe command by solveing the following optimization problem
@@ -155,9 +167,27 @@ class RobotCBF(ControllerInterface):
         else:
             h, coeffs_dhdx = self._calculate_composite_h_and_coeffs_dhdx(collision_objects, cbf_alpha)
 
+            # DO is implemented for the composite CBF where there is only one CBF constraint
+            if use_disturbance_observer:
+                if len(collision_objects) == 0:
+                    self.prev_h = None
+                else:
+                    self.prev_h = h[0] if not self.prev_h else self.prev_h
+                    self.disturbance = self.disturbance_observer.update(
+                        h, self.prev_h, coeffs_dhdx, self.ux, self.uy, velocity=self.vel
+                    )
+                    self.prev_h = h[0]
+
         # Define problem data
         P, q, A, l, u = self._define_QP_problem_data(
-            ux, uy, cbf_alpha, penalty_slack, h, coeffs_dhdx, force_direction_unchanged
+            ux,
+            uy,
+            cbf_alpha,
+            penalty_slack,
+            h,
+            coeffs_dhdx,
+            force_direction_unchanged,
+            disturbance_h_dot=self.disturbance,
         )
 
         self.prob = osqp.OSQP()
@@ -188,7 +218,9 @@ class RobotCBF(ControllerInterface):
             # coeffs_dhdx.append([2 * self.x - 2 * obj.x, 2 * self.y - 2 * obj.y, penalty_slack])
         return h, coeffs_dhdx
 
-    def _calculate_composite_h_and_coeffs_dhdx(self, collision_objects: list, cbf_alpha: float):
+    def _calculate_composite_h_and_coeffs_dhdx(
+        self, collision_objects: list, cbf_alpha: float
+    ) -> Tuple[List[float], List[List[float]]]:
         def log_sum_exp(x):
             return np.log(np.sum(np.exp(x), axis=0))
 
@@ -223,6 +255,7 @@ class RobotCBF(ControllerInterface):
         h: np.ndarray,
         coeffs_dhdx: np.ndarray,
         force_direction_unchanged: bool,
+        disturbance_h_dot: float = 0.0,
     ):
         # P: shape (nx, nx)
         # q: shape (nx,)
@@ -234,10 +267,10 @@ class RobotCBF(ControllerInterface):
         q = np.array([-ux, -uy, penalty_slack])
         A = sparse.csc_matrix([c for c in coeffs_dhdx] + [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         if force_direction_unchanged:
-            l = np.array([-cbf_alpha * h_ for h_ in h] + [np.minimum(ux, 0), np.minimum(uy, 0), 0])
+            l = np.array([-cbf_alpha * h_ - disturbance_h_dot for h_ in h] + [np.minimum(ux, 0), np.minimum(uy, 0), 0])
             u = np.array([np.inf for _ in h] + [np.maximum(ux, 0), np.maximum(uy, 0), np.inf])
         else:
-            l = np.array([-cbf_alpha * h_ for h_ in h] + [-self.vel, -self.vel, 0])
+            l = np.array([-cbf_alpha * h_ - disturbance_h_dot for h_ in h] + [-self.vel, -self.vel, 0])
             u = np.array([np.inf for _ in h] + [self.vel, self.vel, np.inf])
         return P, q, A, l, u
 

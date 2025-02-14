@@ -1,4 +1,16 @@
-# Refactoring notes (ChatGPT/Claude generated)
+# Disturbance Observer notes
+- Adding disturbance observer for estimating unmodeled h_dot (which occurs when the obstacle is moving) make the robot keep safer distance to moving obstacles
+  - The design of barrier function assumes static obstacle in this project, h_dot becomes inaccurate when the obstacle is moving
+  - There is no perceivable difference between estimating disturbance in XY direciton and estimating a lumped disturbance
+
+<img src="assets/cbf_w_wo_do.png" alt="Description" width="480">
+
+- Left: with disturbance observer
+- Right: w/o disturbance observer
+
+
+
+# Refactoring Notes (ChatGPT/Claude generated)
 
 ## Before game state & contorls refactoring
 ```python

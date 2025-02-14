@@ -104,3 +104,5 @@ $$
 - Ames, Aaron D., et al. "Control barrier functions: Theory and applications." 2019 18th European control conference (ECC). IEEE, 2019. ([arxiv](https://arxiv.org/abs/1903.11199))
 - Harms, Marvin, Martin Jacquet, and Kostas Alexis. "Safe Quadrotor Navigation using Composite Control Barrier Functions." arXiv preprint arXiv:2502.04101 (2025).
 - Molnar, Tamas G., and Aaron D. Ames. "Composing control barrier functions for complex safety specifications." IEEE Control Systems Letters (2023).
+- Alan, Anil, et al. "Disturbance observers for robust safety-critical control with control barrier functions." IEEE Control Systems Letters 7 (2022): 1123-1128.
+- Liang, Kaizhao, et al. "Cautious optimizers: Improving training with one line of code." arXiv preprint arXiv:2411.16085 (2024).

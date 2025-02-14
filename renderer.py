@@ -111,7 +111,7 @@ class GameRenderer:
             # Blit templates for each point
             for x, y in detected_points:
                 # Draw line from robot to point
-                # pygame.draw.line(points_surface, (235, 122, 52), (robot.x, robot.y), (x, y), 1)
+                # pygame.draw.line(points_surface, (170, 80, 35), (robot.x, robot.y), (x, y), 1)
                 # Calculate position to blit while accounting for template center offset
                 pos = (x - template_size // 2, y - template_size // 2)
                 points_surface.blit(outer_template, pos)
