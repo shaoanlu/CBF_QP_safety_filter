@@ -5,8 +5,8 @@
 
 <img src="assets/cbf_w_wo_do.png" alt="Description" width="480">
 
-- Left: with disturbance observer
-- Right: w/o disturbance observer
+- Left: disturbance observer enabled with adversarial user input
+- Right: disturbance observer disabled with adversarial user input
 
 
 
