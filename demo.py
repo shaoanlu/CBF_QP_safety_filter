@@ -1,4 +1,4 @@
-import sys
+from typing import List
 import pygame
 import numpy as np
 
@@ -14,6 +14,14 @@ from utils import draw_robot
 WINDOW_WIDTH = 340
 WINDOW_HEIGHT = 400
 
+OBSTACLE_CLR_VIS = (0, 0, 255)
+OBSTACLE_CLR_INVIS = (0, 0, 75)
+
+
+def set_robot_color(robots: List[RobotCBF], color: tuple):
+    for robot in robots:
+        robot.color = color
+
 
 def run():
     # init game systems
@@ -25,9 +33,11 @@ def run():
 
     # init robots
     ego_robot: ControllerInterface = RobotCBF(SimpleRobotDynamics(x0=np.array([50, 350])), (0, 255, 0), vel=3)
-    static_robot: ControllerInterface = RobotCBF(SimpleRobotDynamics(x0=np.array([120, 200])), (0, 0, 255), vel=0)
-    patrol_robot1: ControllerInterface = RobotCBF(SimpleRobotDynamics(x0=np.array([230, 300])), (0, 0, 255), vel=1)
-    patrol_robot2: ControllerInterface = RobotCBF(SimpleRobotDynamics(x0=np.array([300, 70])), (0, 0, 255), vel=1)
+    static_robot: ControllerInterface = RobotCBF(SimpleRobotDynamics(x0=np.array([120, 200])), OBSTACLE_CLR_VIS, vel=0)
+    patrol_robot1: ControllerInterface = RobotCBF(
+        SimpleRobotDynamics(x0=np.array([230, 300])), OBSTACLE_CLR_VIS, vel=1
+    )
+    patrol_robot2: ControllerInterface = RobotCBF(SimpleRobotDynamics(x0=np.array([300, 70])), OBSTACLE_CLR_VIS, vel=1)
     patrol_robots = [patrol_robot1, patrol_robot2]
     collision_objects = [static_robot, patrol_robot1, patrol_robot2]
 
@@ -76,6 +86,9 @@ def run():
                 max_range=150.0,
             )
             lidar_points = [np.asarray(x) for x in set(lidar_points)]
+            set_robot_color(collision_objects, OBSTACLE_CLR_INVIS)
+        else:
+            set_robot_color(collision_objects, OBSTACLE_CLR_VIS)
 
         # move robots
         static_robot.control(None)
