@@ -169,14 +169,17 @@ class RobotCBF(ControllerInterface):
 
             # DO is implemented for the composite CBF where there is only one CBF constraint
             if use_disturbance_observer:
-                if len(collision_objects) == 0:
-                    self.prev_h = None
-                else:
-                    self.prev_h = h[0] if not self.prev_h else self.prev_h
-                    self.disturbance = self.disturbance_observer.update(
-                        h, self.prev_h, coeffs_dhdx, self.ux, self.uy, velocity=self.vel
-                    )
-                    self.prev_h = h[0]
+                model_state = np.array([self.x, self.y])
+                model_control = np.array([self.ux, self.uy])
+                self.disturbance = self._estimate_disturbance(
+                    model_state=model_state,
+                    model_control=model_control,
+                    h=h,
+                    coeffs_dhdx=coeffs_dhdx,
+                    f_x=self.model.f_x(model_state),
+                    g_x=self.model.g_x(model_state),
+                    velocity=self.vel,
+                )
 
         # Define problem data
         P, q, A, l, u = self._define_QP_problem_data(
@@ -245,6 +248,26 @@ class RobotCBF(ControllerInterface):
         h.append(h_x)
         coeffs_dhdx.append([dhdx[0], dhdx[1], 1])
         return h, coeffs_dhdx
+
+    def _estimate_disturbance(
+        self,
+        model_state: np.ndarray,
+        h: List[float],
+        coeffs_dhdx: List[List[float]],
+        model_control: np.ndarray,
+        f_x: np.ndarray,
+        g_x: np.ndarray,
+        **kwargs
+    ) -> float:
+        disturbance = self.disturbance_observer.update(
+            h,
+            coeffs_dhdx,
+            model_control,
+            f_x=self.model.f_x(model_state),
+            g_x=self.model.g_x(model_state),
+            velocity=self.vel,
+        )
+        return disturbance
 
     def _define_QP_problem_data(
         self,

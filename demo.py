@@ -8,7 +8,6 @@ from sensors.lidar import simulate_2d_lidar_scan, create_obstacle_binary_map
 from controllers.i_controller import ControllerInterface
 from controllers.robot_cbf import RobotCBF
 from renderer import GameRenderer, UIConfig
-from utils import draw_robot
 
 
 WINDOW_WIDTH = 340
@@ -82,7 +81,7 @@ def run():
             lidar_points = simulate_2d_lidar_scan(
                 grid_map=grid_map,
                 position=(ego_robot.x, ego_robot.y),
-                angular_resolution=5 * np.pi / 180,  # 5 degree
+                angular_resolution=np.deg2rad(5),  # higher resolution result in less jittering CBF output
                 max_range=150.0,
             )
             lidar_points = [np.asarray(x) for x in set(lidar_points)]

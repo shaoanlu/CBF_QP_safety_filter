@@ -9,14 +9,11 @@ from controllers.caution_adam import CautionAdam
 class DisturbanceEstimationStrategy(ABC):
     """Protocol defining the interface for disturbance estimation strategies."""
 
-    def estimate(
-        self, h: List[float], prev_h: float, coeffs_dhdx: List[List[float]], ux: float, uy: float, **kwargs
-    ) -> float:
+    def estimate(self, h: List[float], coeffs_dhdx: List[List[float]], ux: float, uy: float, **kwargs) -> float:
         """Estimate the disturbance based on the current state and inputs.
 
         Args:
             h: Current state measurement
-            prev_h: Previous state measurement
             coeffs_dhdx: Coefficients for partial derivatives
             ux: Control input in x direction
             uy: Control input in y direction
@@ -43,18 +40,24 @@ class BasicDisturbanceObserver(DisturbanceEstimationStrategy):
         self.est_state = 0.0
 
     def estimate(
-        self, h: List[float], prev_h: float, coeffs_dhdx: List[List[float]], ux: float, uy: float, **kwargs
+        self,
+        h: List[float],
+        coeffs_dhdx: List[List[float]],
+        control: np.ndarray,
+        f_x: np.ndarray,
+        g_x: np.ndarray,
+        **kwargs
     ) -> float:
         velocity = kwargs.get("velocity", 1.0)
 
-        Lgh = np.array([coeffs_dhdx[0][0], coeffs_dhdx[0][1]])
-        u = np.array([ux, uy])
+        Lfh = np.array([coeffs_dhdx[0][:-1]]) @ f_x  # ignore last element of coeffs_dhdx which is for slack variable
+        Lgh = np.array([coeffs_dhdx[0][:-1]]) @ g_x  # ignore last element of coeffs_dhdx which is for slack variable
 
         # Update auxiliary state
-        self.aux_state += self.gain * (Lgh @ u + self.est_state)
+        self.aux_state += float(self.gain * (Lfh + Lgh @ control + self.est_state))
 
         # Update estimation state
-        self.est_state = self.gain * h[0] - self.aux_state
+        self.est_state = float(self.gain * h[0] - self.aux_state)
 
         # Clip the disturbance estimate
         max_disturbance = abs(coeffs_dhdx[0][0]) * velocity + abs(coeffs_dhdx[0][1]) * velocity
@@ -77,17 +80,15 @@ class CautionAdamDisturbanceObserver(DisturbanceEstimationStrategy):
         self.prev_h: Optional[float] = None
         self.disturbance_xy = {"ux": 0.0, "uy": 0.0}
 
-    def estimate(
-        self, h: List[float], prev_h: float, coeffs_dhdx: List[List[float]], ux: float, uy: float, **kwargs
-    ) -> float:
+    def estimate(self, h: List[float], coeffs_dhdx: List[List[float]], control: np.ndarray, **kwargs) -> float:
         velocity = kwargs.get("velocity", 1.0)
 
         if self.prev_h is None:
             self.prev_h = h[0]
 
         # Compute predicted state derivative
-        est_h_dot = coeffs_dhdx[0][0] * (ux + self.disturbance_xy["ux"]) + coeffs_dhdx[0][1] * (
-            uy + self.disturbance_xy["uy"]
+        est_h_dot = coeffs_dhdx[0][0] * (control[0] + self.disturbance_xy["ux"]) + coeffs_dhdx[0][1] * (
+            control[1] + self.disturbance_xy["uy"]
         )
         est_h = self.prev_h + est_h_dot
 
@@ -125,13 +126,18 @@ class DisturbanceObserver:
         self.strategy = strategy or BasicDisturbanceObserver()
 
     def update(
-        self, h: List[float], prev_h: float, coeffs_dhdx: List[List[float]], ux: float, uy: float, **kwargs
+        self,
+        h: List[float],
+        coeffs_dhdx: List[List[float]],
+        control: np.ndarray,
+        f_x: np.ndarray,
+        g_x: np.ndarray,
+        **kwargs
     ) -> float:
         """Update the disturbance estimation.
 
         Args:
             h: Current state measurement
-            prev_h: Previous state measurement
             coeffs_dhdx: Coefficients for partial derivatives
             ux: Control input in x direction
             uy: Control input in y direction
@@ -140,7 +146,7 @@ class DisturbanceObserver:
         Returns:
             float: the estimated disturbance
         """
-        return self.strategy.estimate(h, prev_h, coeffs_dhdx, ux, uy, **kwargs)
+        return self.strategy.estimate(h=h, coeffs_dhdx=coeffs_dhdx, control=control, f_x=f_x, g_x=g_x, **kwargs)
 
     def set_strategy(self, strategy: DisturbanceEstimationStrategy) -> None:
         """Set the disturbance estimation strategy.

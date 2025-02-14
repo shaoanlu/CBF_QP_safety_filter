@@ -4,6 +4,7 @@ from typing import Union, List, Dict
 
 from models.i_model import ModelInterface
 
+
 class SimpleRobotDynamics(ModelInterface):
     def __init__(self, x0: np.ndarray, xr: float = 0, yr: float = 0, size: int = 30) -> None:
         self.x = x0.astype(np.float64)  # xy positoin of the robot, shape(2,)
@@ -16,6 +17,12 @@ class SimpleRobotDynamics(ModelInterface):
 
     def x_dot(self, u: np.ndarray) -> np.ndarray:
         return u.astype(np.float64)
+
+    def f_x(self, x: np.ndarray) -> np.ndarray:
+        return np.zeros((2,))
+
+    def g_x(self, x: np.ndarray) -> np.ndarray:
+        return np.eye(2)
 
     def h(self, x: Union[List, np.ndarray]) -> float:
         return (x[0] - self.xr) ** 2 + (x[1] - self.yr) ** 2 - (self.size * 2.3) ** 2
