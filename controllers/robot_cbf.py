@@ -1,5 +1,6 @@
 import numpy as np
 from scipy import sparse
+from scipy.special import logsumexp
 import osqp
 from typing import Optional, List, Tuple
 
@@ -224,9 +225,6 @@ class RobotCBF(ControllerInterface):
     def _calculate_composite_h_and_coeffs_dhdx(
         self, collision_objects: list, cbf_alpha: float
     ) -> Tuple[List[float], List[List[float]]]:
-        def log_sum_exp(x):
-            return np.log(np.sum(np.exp(x), axis=0))
-
         if len(collision_objects) == 0:
             return [1], [[0, 0, 1]]
 
@@ -237,11 +235,12 @@ class RobotCBF(ControllerInterface):
         lidar_points = np.array(collision_objects)
         hi_x = np.linalg.norm(x0 - lidar_points, axis=1) ** 2 - dist_buffer**2
         assert hi_x.shape == (len(lidar_points),), hi_x
-        h_x = -1 / kappa * log_sum_exp(-kappa * hi_x)  # beware of numerical error due to exponent
+        h_x = -1 / kappa * logsumexp(-kappa * hi_x)  # beware of numerical error due to exponent
         dhdx = np.sum(np.exp(-kappa * (hi_x - h_x))[..., None] * (-2 * lidar_points + 2 * x0), axis=0)
-        # h_x = -1 / kappa * log_sump_exp(-kappa * np.tanh(hi_x))  # scale to prevent numerical error
+        # vi_x = np.tanh(hi_x / gamma)
+        # h_x = -gamma / kappa * logsumexp(-kappa * vi_x)  # scale to prevent numerical error
         # dhdx = np.sum(
-        #     np.exp(-kappa * (hi_x - h_x))[..., None] * 2 * (x0 - lidar_points) / (np.cosh(hi_x)[..., None] ** 2),
+        #     (np.exp(-kappa * (vi_x - h_x)) / (np.cosh(hi_x / gamma) ** 2))[..., None] * 2 * (x0 - lidar_points),
         #     axis=0,
         # )  # this drivative is buggy
         assert dhdx.shape == (2,), dhdx
