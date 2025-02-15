@@ -11,7 +11,7 @@ This Python program demonstrates the use of control barrier functions (CBFs) for
 - Right: w/ safety filter treating lidar points as obstacles
 
 ## Key Features
-#### CBF-QP Ssafety filter
+#### CBF-QP safety filter
 Implements a CBF-based optimization to minimally adjust control inputs, ensuring the robot remains within safe distance defined by the barrier function to prevent collision.
 #### Sumulated LiDAR
 Includes a 2D LiDAR sensor simulation that can be used instead of ground truth obstacle positions.

@@ -173,7 +173,6 @@ class RobotCBF(ControllerInterface):
                 model_state = np.array([self.x, self.y])
                 model_control = np.array([self.ux, self.uy])
                 self.disturbance = self._estimate_disturbance(
-                    model_state=model_state,
                     model_control=model_control,
                     h=h,
                     coeffs_dhdx=coeffs_dhdx,
@@ -230,13 +229,14 @@ class RobotCBF(ControllerInterface):
 
         h = []
         coeffs_dhdx = []
-        kappa, dist_buffer = 5e-2 * cbf_alpha, self.size * 1.3
+        kappa, dist_buffer = 1e-1 * cbf_alpha, self.size * 1.3
         x0 = np.array([self.x, self.y])
         lidar_points = np.array(collision_objects)
         hi_x = np.linalg.norm(x0 - lidar_points, axis=1) ** 2 - dist_buffer**2
         assert hi_x.shape == (len(lidar_points),), hi_x
         h_x = -1 / kappa * logsumexp(-kappa * hi_x)  # beware of numerical error due to exponent
         dhdx = np.sum(np.exp(-kappa * (hi_x - h_x))[..., None] * (-2 * lidar_points + 2 * x0), axis=0)
+        # gamma = 1
         # vi_x = np.tanh(hi_x / gamma)
         # h_x = -gamma / kappa * logsumexp(-kappa * vi_x)  # scale to prevent numerical error
         # dhdx = np.sum(
@@ -250,21 +250,21 @@ class RobotCBF(ControllerInterface):
 
     def _estimate_disturbance(
         self,
-        model_state: np.ndarray,
         h: List[float],
         coeffs_dhdx: List[List[float]],
         model_control: np.ndarray,
         f_x: np.ndarray,
         g_x: np.ndarray,
+        velocity: float,
         **kwargs
     ) -> float:
         disturbance = self.disturbance_observer.update(
             h,
             coeffs_dhdx,
             model_control,
-            f_x=self.model.f_x(model_state),
-            g_x=self.model.g_x(model_state),
-            velocity=self.vel,
+            f_x=f_x,
+            g_x=g_x,
+            velocity=velocity,
         )
         return disturbance
 

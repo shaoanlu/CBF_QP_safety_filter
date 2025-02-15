@@ -26,6 +26,7 @@ class ModelInterface:
     @abstractmethod
     def h(self, *args, **kwargs):
         # barrier function
+        # R^n -> R^1
         raise NotImplementedError
 
     @abstractmethod
