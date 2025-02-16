@@ -67,11 +67,12 @@ python -m unittest
 ## Dependencies
 The program was developed and tested in the following environment.
 - Python 3.9+
-- `torch==1.8.1+cpu` (optional)
 - `osqp==0.6.7`
 - `pygame==2.6.1`
 - `numpy==1.26.4`
 - `scipy==1.13.1`
+- `proxsuite==0.6.7` (optional)
+- `clarabel==0.10.0` (optional)
 
 ## CBF-QP safety filter
 The safety filter based on CBF-QP aims to modify a user's command (desired control input) to satisfy system constraints while keeping the modification minimal. The optimization problem of the safety filter is given below. 
