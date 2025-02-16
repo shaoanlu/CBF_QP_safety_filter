@@ -49,7 +49,7 @@ flowchart TB
             (_calculate_h_and_coeffs_dhdx() or
             _calculate_composite_h_and_coeffs_dhdx())"]
             CalcBarrier --> SetupQP["Setup QP Problem
-            (_define_QP_problem_data())"]
+            (CBFQPFormulation.create_matrices())"]
             SetupQP --> SolveQP["Solve QP using OSQP
             (osqp.OSQP().solve())"]
             SolveQP --> CheckFeasible{"Solution
