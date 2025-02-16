@@ -46,9 +46,9 @@ class BasicDisturbanceObserver(DisturbanceEstimationStrategy):
         control: np.ndarray,
         f_x: np.ndarray,
         g_x: np.ndarray,
+        velocity: float,
         **kwargs
     ) -> float:
-        velocity = kwargs.get("velocity", 1.0)
 
         Lfh = np.array([coeffs_dhdx[0][:-1]]) @ f_x  # ignore last element of coeffs_dhdx which is for slack variable
         Lgh = np.array([coeffs_dhdx[0][:-1]]) @ g_x  # ignore last element of coeffs_dhdx which is for slack variable
@@ -80,8 +80,9 @@ class CautionAdamDisturbanceObserver(DisturbanceEstimationStrategy):
         self.prev_h: Optional[float] = None
         self.disturbance_xy = {"ux": 0.0, "uy": 0.0}
 
-    def estimate(self, h: List[float], coeffs_dhdx: List[List[float]], control: np.ndarray, **kwargs) -> float:
-        velocity = kwargs.get("velocity", 1.0)
+    def estimate(
+        self, h: List[float], coeffs_dhdx: List[List[float]], control: np.ndarray, velocity: float, **kwargs
+    ) -> float:
 
         if self.prev_h is None:
             self.prev_h = h[0]

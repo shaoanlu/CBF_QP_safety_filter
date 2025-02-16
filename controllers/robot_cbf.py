@@ -1,11 +1,15 @@
 import numpy as np
 from scipy import sparse
 from scipy.special import logsumexp
+
 import osqp
+
+# import proxsuite
 from typing import Optional, List, Tuple
 
 from models.i_model import ModelInterface
 from controllers.i_controller import ControllerInterface
+from controllers.cbfqp_problem import CBFQPFormulation
 
 from controllers.disturbance_observer import (
     BasicDisturbanceObserver,
@@ -44,6 +48,7 @@ class RobotCBF(ControllerInterface):
         self.size = size
         self.is_collided = False
         self.prob = None
+        self.nx = 2  # x and y control
 
         self.prev_h = None
         # self.disturbance_observer = DisturbanceObserver(CautionAdamDisturbanceObserver(lr=1.0))
@@ -138,67 +143,31 @@ class RobotCBF(ControllerInterface):
         is_lidar_simulation: bool = False,
         use_disturbance_observer: bool = True,
     ):
-        """
-        Calculate the safe command by solveing the following optimization problem
-
-                    minimize  || u - u_nom ||^2 + k * δ
-                      u, δ
-                    s.t.
-                            h'(x) ≥ -𝛼 * h(x) - δ
-                            u_min ≤ u ≤ u_max
-                                0 ≤ δ ≤ inf
-        where
-            u = [ux, uy] is the control input in x and y axis respectively.
-            δ is the slack variable
-            h(x) is the control barrier function and h'(x) its derivative
-
-        The problem above can be formulated as QP (ref: https://osqp.org/docs/solver/index.html)
-
-                    minimize 1/2 * x^T * Px + q^T x
-                        x
-                    s.t.
-                                l ≤ Ax ≤ u
-        where
-            x = [ux, uy, δ]
-
-        """
         # Calculate barrier values and coeffs in h_dot
         if not is_lidar_simulation:
+            nh = len(collision_objects)  # number of cbf constraint
             h, coeffs_dhdx = self._calculate_h_and_coeffs_dhdx(collision_objects)
+            disturbance = [0] * len(collision_objects)
         else:
+            nh = 1  # compoosing cbf constraints into one
             h, coeffs_dhdx = self._calculate_composite_h_and_coeffs_dhdx(collision_objects, cbf_alpha)
 
-            # DO is implemented for the composite CBF where there is only one CBF constraint
-            if use_disturbance_observer:
-                model_state = np.array([self.x, self.y])
-                model_control = np.array([self.ux, self.uy])
-                self.disturbance = self._estimate_disturbance(
-                    model_control=model_control,
-                    h=h,
-                    coeffs_dhdx=coeffs_dhdx,
-                    f_x=self.model.f_x(model_state),
-                    g_x=self.model.g_x(model_state),
-                    velocity=self.vel,
-                )
+            # D.O. is implemented for the composite CBF where there is only one CBF constraint
+            disturbance = self._estimate_disturbance(h=h, coeffs_dhdx=coeffs_dhdx)
+            disturbance = [disturbance] * nh
 
-        # Define problem data
-        P, q, A, l, u = self._define_QP_problem_data(
-            ux,
-            uy,
-            cbf_alpha,
-            penalty_slack,
-            h,
-            coeffs_dhdx,
-            force_direction_unchanged,
-            disturbance_h_dot=self.disturbance,
+        # Solve CBF-QP
+        control = np.array([ux, uy])
+        control_bounds = self._get_control_bounds(force_direction_unchanged)
+        ux, uy = self._solve_cbf_qp(
+            h=h,
+            coeffs_dhdx=coeffs_dhdx,
+            disturbance_h_dot=disturbance,
+            control=control,
+            control_bounds=control_bounds,
+            cbf_alpha=cbf_alpha,
+            penalty_slack=penalty_slack,
         )
-
-        self.prob = osqp.OSQP()
-        self.prob.setup(P, q, A, l, u, verbose=False, time_limit=0)
-
-        # Solve QP problem
-        res = self.prob.solve()
-        ux, uy, _ = res.x
 
         # Handle infeasible sol.
         ux = self.nominal_ux if ux is None else ux
@@ -214,11 +183,7 @@ class RobotCBF(ControllerInterface):
             self.model.update_params({"xr": obj.x, "yr": obj.y, "size": self.size})
             h.append(self.model.h(model_state))
             # Note: append additional elements for the slack variable δ
-            coeffs_dhdx.append(self.model.h_dot(model_state) + [1])
-
-            # NOTE: To speedup computation, we can calculate dhdu offline and hardcoded it as below
-            # h.append((self.x - obj.x) ** 2 + (self.y - obj.y) ** 2 - (self.size * 2.3) ** 2)
-            # coeffs_dhdx.append([2 * self.x - 2 * obj.x, 2 * self.y - 2 * obj.y, penalty_slack])
+            coeffs_dhdx.append(self.model.h_dot(model_state) + [1] * len(collision_objects))
         return h, coeffs_dhdx
 
     def _calculate_composite_h_and_coeffs_dhdx(
@@ -229,7 +194,7 @@ class RobotCBF(ControllerInterface):
 
         h = []
         coeffs_dhdx = []
-        kappa, dist_buffer = 1e-1 * cbf_alpha, self.size * 1.3
+        kappa, dist_buffer = 5e-2 * cbf_alpha, self.size * 1.3
         x0 = np.array([self.x, self.y])
         lidar_points = np.array(collision_objects)
         hi_x = np.linalg.norm(x0 - lidar_points, axis=1) ** 2 - dist_buffer**2
@@ -245,56 +210,71 @@ class RobotCBF(ControllerInterface):
         # )  # this drivative is buggy
         assert dhdx.shape == (2,), dhdx
         h.append(h_x)
-        coeffs_dhdx.append([dhdx[0], dhdx[1], 1])
+        coeffs_dhdx.append([dhdx[0], dhdx[1], 1])  # append one more element for the slack variable δ
         return h, coeffs_dhdx
 
     def _estimate_disturbance(
         self,
         h: List[float],
         coeffs_dhdx: List[List[float]],
-        model_control: np.ndarray,
-        f_x: np.ndarray,
-        g_x: np.ndarray,
-        velocity: float,
-        **kwargs
+        **kwargs,
     ) -> float:
+        model_state = np.array([self.x, self.y])
+        model_control = np.array([self.ux, self.uy])
         disturbance = self.disturbance_observer.update(
-            h,
-            coeffs_dhdx,
-            model_control,
-            f_x=f_x,
-            g_x=g_x,
-            velocity=velocity,
+            h=h,
+            coeffs_dhdx=coeffs_dhdx,
+            control=model_control,
+            f_x=self.model.f_x(model_state),
+            g_x=self.model.g_x(model_state),
+            velocity=self.vel,
         )
         return disturbance
 
-    def _define_QP_problem_data(
+    def _get_control_bounds(self, force_direction_unchanged: bool) -> Tuple[np.ndarray, np.ndarray]:
+        max_control = (
+            np.array([np.maximum(self.ux, 0), np.maximum(self.uy, 0)])
+            if force_direction_unchanged
+            else np.array([self.vel, self.vel])
+        )
+        min_control = (
+            np.array([np.minimum(self.ux, 0), np.minimum(self.uy, 0)])
+            if force_direction_unchanged
+            else np.array([-self.vel, -self.vel])
+        )
+        return max_control, min_control
+
+    def _solve_cbf_qp(
         self,
-        ux: float,
-        uy: float,
+        h: List[float],
+        coeffs_dhdx: List[List[float]],
+        disturbance_h_dot: List[float],
+        control: np.ndarray,
+        control_bounds: Tuple[np.ndarray, np.ndarray],
         cbf_alpha: float,
         penalty_slack: float,
-        h: np.ndarray,
-        coeffs_dhdx: np.ndarray,
-        force_direction_unchanged: bool,
-        disturbance_h_dot: float = 0.0,
-    ):
-        # P: shape (nx, nx)
-        # q: shape (nx,)
-        # A: shape (nh+nx, nx)
-        # l: shape (nh+nx,)
-        # u: shape (nh+nx,)
-        # (nx: number of state; nh: number of control barrier functions)
-        P = sparse.csc_matrix([[1, 0, 0], [0, 1, 0], [0, 0, 0]])
-        q = np.array([-ux, -uy, penalty_slack])
-        A = sparse.csc_matrix([c for c in coeffs_dhdx] + [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        if force_direction_unchanged:
-            l = np.array([-cbf_alpha * h_ - disturbance_h_dot for h_ in h] + [np.minimum(ux, 0), np.minimum(uy, 0), 0])
-            u = np.array([np.inf for _ in h] + [np.maximum(ux, 0), np.maximum(uy, 0), np.inf])
-        else:
-            l = np.array([-cbf_alpha * h_ - disturbance_h_dot for h_ in h] + [-self.vel, -self.vel, 0])
-            u = np.array([np.inf for _ in h] + [self.vel, self.vel, np.inf])
-        return P, q, A, l, u
+    ) -> Optional[np.ndarray]:
+        max_control, min_control = control_bounds
+        qp_formulation = CBFQPFormulation(nx=self.nx, nh=len(h))
+        qp_data = qp_formulation.create_matrices(
+            h=h,
+            coeffs_dhdx=coeffs_dhdx,
+            nominal_control=control,
+            max_control=max_control,
+            min_control=min_control,
+            cbf_alpha=cbf_alpha,
+            slack_penalty=penalty_slack,
+            disturbance_h_dot=disturbance_h_dot,
+        )
+        P, q, A, l, u = qp_data.P, qp_data.q, qp_data.A, qp_data.l, qp_data.u
+
+        # Solve QP problem
+        self.prob = osqp.OSQP()
+        self.prob.setup(P, q, A, l, u, verbose=False, time_limit=0)
+        res = self.prob.solve()
+        # res = proxsuite.proxqp.dense.solve(H=P.toarray(), g=q, C=A.toarray(), l=l, u=u)
+        ux, uy = res.x[: self.nx]
+        return ux, uy
 
     def detect_collision(self, collision_objects: list = []):
         """
