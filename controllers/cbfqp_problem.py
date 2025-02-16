@@ -88,44 +88,41 @@ class CBFQPFormulation:
         if disturbance_h_dot is None:
             disturbance_h_dot = [0.0] * self.nh
 
-        P = self._create_cost_matrix()
-        q = self._create_cost_vector(nominal_control, slack_penalty)
+        P = self._create_cost_matrix(slack_penalty)
+        q = self._create_cost_vector(nominal_control)
         A = self._create_constraint_matrix(coeffs_dhdx)
         l, u = self._create_bound_vectors(h, disturbance_h_dot, cbf_alpha, max_control, min_control)
 
         return QPProblemData(P=P, q=q, A=A, l=l, u=u)
 
-    def _create_cost_matrix(self) -> sparse.csc_matrix:
+    def _create_cost_matrix(self, slack_penalty: float) -> sparse.csc_matrix:
         """
         Create the quadratic cost matrix P.
 
         The matrix P defines the quadratic term in the objective function:
         1/2 x^T P x, where x = [u_x, u_y, δ]
 
+        Args:
+            slack_penalty (float): Penalty coefficient for slack variables
+
         Returns:
             sparse.csc_matrix: Sparse matrix P of shape (nx + nh, nx + nh)
         """
         P = np.eye(self.nx + self.nh)
-        P[self.nx :, self.nx :] = 0  # No quadratic penalty on slack variables
+        P[self.nx :, self.nx :] = P[self.nx :, self.nx :] * slack_penalty  # Penalize slack variables
         return sparse.csc_matrix(P)
 
-    def _create_cost_vector(self, nominal_control: np.ndarray, slack_penalty: float) -> np.ndarray:
+    def _create_cost_vector(self, nominal_control: np.ndarray) -> np.ndarray:
         """
         Create the linear cost vector q.
 
         Args:
             nominal_control (np.ndarray): Nominal control inputs
-            slack_penalty (float): Penalty coefficient for slack variables
 
         Returns:
             np.ndarray: Vector q of shape (nx + nh,)
         """
-        return np.hstack(
-            [
-                -nominal_control,  # Minimize deviation from nominal control
-                np.ones(self.nh) * slack_penalty,  # Penalize slack variables
-            ]
-        )
+        return np.hstack([-nominal_control, np.zeros(self.nh)])  # Minimize deviation from nominal control
 
     def _create_constraint_matrix(self, coeffs_dhdx: List[List[float]]) -> sparse.csc_matrix:
         """
@@ -151,7 +148,11 @@ class CBFQPFormulation:
         min_control: np.ndarray,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Create the lower and upper bound vectors l and u.
+        Create the lower and upper bound vectors l and u that abide by the cbf constraints:
+
+            h_dot + disturbance_h_dot >= -alpha * h
+            u_min <= u <= u_max
+            -inf <= δ <= inf
 
         Args:
             h (List[float]): Barrier function values
@@ -165,7 +166,7 @@ class CBFQPFormulation:
         """
         # Lower bounds: CBF constraints and control/slack bounds
         l = np.concatenate(
-            [[-cbf_alpha * h_ - d_ for h_, d_ in zip(h, disturbance_h_dot)], min_control, np.zeros(self.nh)]
+            [[-cbf_alpha * h_ - d_ for h_, d_ in zip(h, disturbance_h_dot)], min_control, np.full(self.nh, -np.inf)]
         )
 
         # Upper bounds: Infinity for CBF constraints, control bounds, and slack bounds

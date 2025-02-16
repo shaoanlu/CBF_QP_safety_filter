@@ -140,7 +140,6 @@ class RobotCBF(ControllerInterface):
         force_direction_unchanged: bool,
         collision_objects: list,
         is_lidar_simulation: bool = False,
-        use_disturbance_observer: bool = True,
     ):
         # Calculate barrier values and coeffs in h_dot
         if not is_lidar_simulation:
