@@ -4,7 +4,10 @@ import numpy as np
 
 from game_controls import GameStateManager, GameEvent
 from models.robot_dynamics import SimpleRobotDynamics
+
 from sensors.lidar import simulate_2d_lidar_scan, create_obstacle_binary_map
+
+# from sensors.lidar_numba import simulate_2d_lidar_scan, create_obstacle_binary_map
 from controllers.i_controller import ControllerInterface
 from controllers.robot_cbf import RobotCBF
 from renderer import GameRenderer, UIConfig

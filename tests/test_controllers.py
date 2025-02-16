@@ -22,7 +22,7 @@ class TestRobotCBF(unittest.TestCase):
         self.assertEqual(self.robot.y, 0)
 
     def test_update_positions(self):
-        # Given new xY position 
+        # Given new xY position
         new_x, new_y = 1, 1
         # When update
         self.robot._update_positions(new_x, new_y)
