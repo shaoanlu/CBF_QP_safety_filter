@@ -263,7 +263,6 @@ class RobotCBF(ControllerInterface):
             disturbance_h_dot=disturbance_h_dot,
         )
         P, q, A, l, u = qp_data.P, qp_data.q, qp_data.A, qp_data.l, qp_data.u
-        print(f"{P=}\n{q=}\n{A=}\n{l=}\n{u=}")
 
         # Solve QP problem using selected solver
         # in general, all solvers perform the same, but some may be faster than others (osqp the slowest)
