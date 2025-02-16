@@ -155,7 +155,7 @@ class RobotCBF(ControllerInterface):
 
         # Solve CBF-QP
         control = np.array([ux, uy])
-        control_bounds = self._get_control_bounds(force_direction_unchanged)
+        control_bounds = self._get_control_bounds(control, force_direction_unchanged)
         ux, uy = self._solve_cbf_qp(
             h=h,
             coeffs_dhdx=coeffs_dhdx,
@@ -223,14 +223,17 @@ class RobotCBF(ControllerInterface):
         )
         return disturbance
 
-    def _get_control_bounds(self, force_direction_unchanged: bool) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_control_bounds(
+        self, control: np.ndarray, force_direction_unchanged: bool
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        ux, uy = control
         max_control = (
-            np.array([np.maximum(self.ux, 0), np.maximum(self.uy, 0)])
+            np.array([np.maximum(ux, 0), np.maximum(uy, 0)])
             if force_direction_unchanged
             else np.array([self.vel, self.vel])
         )
         min_control = (
-            np.array([np.minimum(self.ux, 0), np.minimum(self.uy, 0)])
+            np.array([np.minimum(ux, 0), np.minimum(uy, 0)])
             if force_direction_unchanged
             else np.array([-self.vel, -self.vel])
         )
@@ -260,6 +263,7 @@ class RobotCBF(ControllerInterface):
             disturbance_h_dot=disturbance_h_dot,
         )
         P, q, A, l, u = qp_data.P, qp_data.q, qp_data.A, qp_data.l, qp_data.u
+        print(f"{P=}\n{q=}\n{A=}\n{l=}\n{u=}")
 
         # Solve QP problem using selected solver
         # in general, all solvers perform the same, but some may be faster than others (osqp the slowest)
