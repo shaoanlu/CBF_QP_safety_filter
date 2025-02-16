@@ -31,6 +31,7 @@ class GameRenderer:
         self._init_fonts()
         self._init_text_surfaces()
         self._last_frame_time = pygame.time.get_ticks()
+        self.clock = pygame.time.Clock()  # for FPS tracking
 
     def _init_pygame(self) -> None:
         """Initialize pygame display and font system."""
@@ -148,9 +149,17 @@ class GameRenderer:
         )
         self.screen.blit(config_text, self.config.status_text_positions["lidar_config"])
 
+    def draw_fps(self) -> None:
+        """Draw the current FPS on the screen."""
+        fps = int(self.clock.get_fps())
+        fps_text = self.small_font.render(f"FPS: {fps}", False, (255, 255, 255))
+        self.screen.blit(fps_text, (self.config.window_width - 60, 10))
+
     def update_display(self) -> None:
         """Update the display and maintain a fixed frame rate of 100 FPS."""
+        self.draw_fps()  # Draw FPS before updating display
         pygame.display.update()
+        self.clock.tick(self.config.fps)  # Maintain FPS
 
         # Target frame duration (10ms for 100 FPS)
         frame_duration = 1000 // self.config.fps  # milliseconds
