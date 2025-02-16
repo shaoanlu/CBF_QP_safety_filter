@@ -143,7 +143,7 @@ class GameRenderer:
 
         # Draw lidar configuration
         config_text = self.small_font.render(
-            f"Simulate lidar: {game_state.use_lidar_sensor}",
+            f"Simulate lidar: {game_state.use_lidar_sensor} (S)",
             False,
             (0, 255, 125),
         )

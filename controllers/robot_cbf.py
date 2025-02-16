@@ -8,9 +8,9 @@ from typing import Optional, List, Tuple
 
 from models.i_model import ModelInterface
 from controllers.i_controller import ControllerInterface
-from controllers.cbfqp_problem import CBFQPFormulation
+from controllers.components.cbfqp_problem import CBFQPFormulation
 
-from controllers.disturbance_observer import (
+from controllers.components.disturbance_observer import (
     BasicDisturbanceObserver,
     DisturbanceObserver,
     CautionAdamDisturbanceObserver,
