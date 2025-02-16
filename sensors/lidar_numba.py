@@ -6,7 +6,7 @@ leverage numba for >= 10x faster ray casting
 """
 
 import numpy as np
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 from numba import jit, prange
 
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, List, Callable
+from typing import Dict, Optional, List, Callable
 import pygame
 import sys
 from enum import Enum, auto

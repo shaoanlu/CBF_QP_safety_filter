@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import sparse
 from scipy.special import logsumexp
 
 import osqp
@@ -150,7 +149,7 @@ class RobotCBF(ControllerInterface):
             disturbance = [0] * len(collision_objects)
         else:
             nh = 1  # compoosing cbf constraints into one
-            h, coeffs_dhdx = self._calculate_composite_h_and_coeffs_dhdx(collision_objects, cbf_alpha)
+            h, coeffs_dhdx = self._calculate_composite_h_and_coeffs_dhdx(collision_objects)
 
             # D.O. is implemented for the composite CBF where there is only one CBF constraint
             disturbance = self._estimate_disturbance(h=h, coeffs_dhdx=coeffs_dhdx)
@@ -186,9 +185,7 @@ class RobotCBF(ControllerInterface):
             coeffs_dhdx.append(self.model.h_dot(model_state) + [1] * len(collision_objects))
         return h, coeffs_dhdx
 
-    def _calculate_composite_h_and_coeffs_dhdx(
-        self, collision_objects: list, cbf_alpha: float
-    ) -> Tuple[List[float], List[List[float]]]:
+    def _calculate_composite_h_and_coeffs_dhdx(self, collision_objects: list) -> Tuple[List[float], List[List[float]]]:
         if len(collision_objects) == 0:
             return [1], [[0, 0, 1]]
 
