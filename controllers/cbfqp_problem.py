@@ -66,7 +66,7 @@ class CBFQPFormulation:
         Create all matrices and vectors needed for the QP problem.
         P: shape (nx, nx)
         q: shape (nx,)
-        A: shape (nh+nx, nx)
+        A: shape (nx+nh, nx)
         l: shape (nh+nx,)
         u: shape (nh+nx,)
         nx: number of state (control dim)
@@ -135,7 +135,7 @@ class CBFQPFormulation:
             coeffs_dhdx (List[List[float]]): Coefficients of barrier function derivatives
 
         Returns:
-            sparse.csc_matrix: Matrix A of shape (nh + nx + nh, nx + nh)
+            sparse.csc_matrix: Matrix A of shape (nx + nh, nx + nh)
         """
         A = np.vstack(
             [np.array(coeffs_dhdx), np.eye(self.nx + self.nh)]  # CBF constraints  # Control and slack variable bounds

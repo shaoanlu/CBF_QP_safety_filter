@@ -192,9 +192,7 @@ class RobotCBF(ControllerInterface):
         if len(collision_objects) == 0:
             return [1], [[0, 0, 1]]
 
-        h = []
-        coeffs_dhdx = []
-        kappa, dist_buffer = 5e-2 * cbf_alpha, self.size * 1.3
+        kappa, dist_buffer = 5e-3, self.size * 1.3
         x0 = np.array([self.x, self.y])
         lidar_points = np.array(collision_objects)
         hi_x = np.linalg.norm(x0 - lidar_points, axis=1) ** 2 - dist_buffer**2
@@ -209,9 +207,7 @@ class RobotCBF(ControllerInterface):
         #     axis=0,
         # )  # this drivative is buggy
         assert dhdx.shape == (2,), dhdx
-        h.append(h_x)
-        coeffs_dhdx.append([dhdx[0], dhdx[1], 1])  # append one more element for the slack variable δ
-        return h, coeffs_dhdx
+        return [h_x], [[dhdx[0], dhdx[1], 1]]
 
     def _estimate_disturbance(
         self,
