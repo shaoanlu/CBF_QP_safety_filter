@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, Tuple, List
 import pygame
 from controllers.i_controller import ControllerInterface
+from utils.robot_drawer import RobotDrawer
 
 
 @dataclass
@@ -32,6 +33,7 @@ class GameRenderer:
         self._init_text_surfaces()
         self._last_frame_time = pygame.time.get_ticks()
         self.clock = pygame.time.Clock()  # for FPS tracking
+        self.robot_drawer = RobotDrawer(self.screen)
 
     def _init_pygame(self) -> None:
         """Initialize pygame display and font system."""
@@ -56,12 +58,6 @@ class GameRenderer:
         """Clear the screen with black background."""
         self.screen.fill((0, 0, 0))
 
-    def draw_robot(self, robot: ControllerInterface, draw_filtered_command: bool = False) -> None:
-        """Draw a single robot."""
-        from utils import draw_robot  # Import here to avoid circular import
-
-        draw_robot(self.screen, robot, draw_filtered_command)
-
     def draw_robots(
         self,
         ego_robot: ControllerInterface,
@@ -70,12 +66,12 @@ class GameRenderer:
         game_state,
     ) -> None:
         """Draw all robots in the scene."""
-        self.draw_robot(static_robot)
+        self.robot_drawer.draw_robot(static_robot)
 
         for robot in patrol_robots:
-            self.draw_robot(robot, draw_filtered_command=game_state.use_cbf_patrol_robots)
+            self.robot_drawer.draw_robot(robot, draw_filtered_command=game_state.use_cbf_patrol_robots)
 
-        self.draw_robot(ego_robot, draw_filtered_command=game_state.use_cbf)
+        self.robot_drawer.draw_robot(ego_robot, draw_filtered_command=game_state.use_cbf)
 
     def draw_collision_warning(self, is_collided: bool) -> None:
         """Draw collision warning if collision detected."""
