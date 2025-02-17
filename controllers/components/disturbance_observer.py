@@ -48,11 +48,12 @@ class BasicDisturbanceObserver(DisturbanceEstimationStrategy):
         velocity: float,
         **kwargs,
     ) -> float:
+        self._validate_inputs(h, coeffs_dhdx, control, f_x, g_x)
         Lfh = np.array([coeffs_dhdx[0][:-1]]) @ f_x  # ignore last element of coeffs_dhdx which is for slack variable
         Lgh = np.array([coeffs_dhdx[0][:-1]]) @ g_x  # ignore last element of coeffs_dhdx which is for slack variable
 
         # Update auxiliary state
-        self.aux_state += float(self.gain * (Lfh + Lgh @ control + self.est_state))
+        self.aux_state += float((self.gain * (Lfh + Lgh @ control + self.est_state)).squeeze())
 
         # Update estimation state
         self.est_state = float(self.gain * h[0] - self.aux_state)
@@ -62,6 +63,15 @@ class BasicDisturbanceObserver(DisturbanceEstimationStrategy):
         self.est_state = np.clip(self.est_state, -max_disturbance, max_disturbance)
 
         return self.est_state
+
+    def _validate_inputs(self, h, coeffs_dhdx, control, f_x, g_x):
+        assert (
+            np.array([coeffs_dhdx[0][:-1]]).shape[-1] == f_x.shape[0]
+        ), f"f_x and coeffs_dhdx do not match {np.array([coeffs_dhdx[0][:-1]]).shape=}, {f_x.shape=}"
+        assert (
+            np.array([coeffs_dhdx[0][:-1]]).shape[-1] == g_x.shape[0]
+        ), f"f_x and coeffs_dhdx do not match {np.array([coeffs_dhdx[0][:-1]]).shape=}, {g_x.shape=}"
+        assert g_x.shape[-1] == control.shape[0], f"g_x and control do not match {g_x.shape=}, {control.shape=}"
 
 
 class CautionAdamDisturbanceObserver(DisturbanceEstimationStrategy):

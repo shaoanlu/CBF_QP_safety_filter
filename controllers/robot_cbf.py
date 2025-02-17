@@ -76,7 +76,7 @@ class RobotCBF(ControllerInterface):
         cbf_alpha: float = 1e-1,
         penalty_slack: float = 10,
         collision_objects: list = [],
-        is_lidar_simulation: bool = True,
+        is_lidar_simulation: bool = False,
     ):
         """
         Processes control inputs, applies CBF for safety if enabled, and updates the robot's position.
@@ -138,8 +138,12 @@ class RobotCBF(ControllerInterface):
         force_direction_unchanged: bool,
         collision_objects: list,
         is_lidar_simulation: bool = False,
-        qpsolver: Literal["osqp", "proxsuite", "clarabel"] = "osqp",
+        qpsolver: Literal["osqp", "proxqp", "clarabel"] = "osqp",
     ):
+        if len(collision_objects) == 0:
+            self.ux, self.uy = ux, uy
+            return
+
         # Calculate barrier values and coeffs in h_dot
         if not is_lidar_simulation:
             nh = len(collision_objects)  # number of cbf constraint
@@ -248,7 +252,7 @@ class RobotCBF(ControllerInterface):
         control_bounds: Tuple[np.ndarray, np.ndarray],
         cbf_alpha: float,
         penalty_slack: float,
-        solver: Literal["osqp", "proxsuite", "clarabel"] = "osqp",
+        solver: Literal["osqp", "proxqp", "clarabel"] = "osqp",
     ) -> Optional[np.ndarray]:
         max_control, min_control = control_bounds
         qp_formulation = CBFQPFormulation(nx=self.nx, nh=len(h))
@@ -268,10 +272,10 @@ class RobotCBF(ControllerInterface):
         # in general, all solvers perform the same, but some may be faster than others (osqp the slowest)
         if solver.lower() == "osqp":
             res = self._solve_qp_osqp(P, q, A, l, u)
-        elif solver.lower() == "proxsuite":
-            res = self._solver_qp_proxsuite(P, q, A, l, u)
+        elif solver.lower() == "proxqp":
+            res = self._solve_qp_proxqp(P, q, A, l, u)
         elif solver.lower() == "clarabel":
-            res = self._solver_qp_clarabel(P, q, A, l, u)
+            res = self._solve_qp_clarabel(P, q, A, l, u)
         else:
             raise ValueError(f"Unknown QP solver: {solver}")
 
@@ -283,12 +287,12 @@ class RobotCBF(ControllerInterface):
         prob.setup(P, q, A, l, u, verbose=False, time_limit=0)
         return prob.solve()
 
-    def _solver_qp_proxsuite(self, P, q, A, l, u):
+    def _solve_qp_proxqp(self, P, q, A, l, u):
         import proxsuite
 
         return proxsuite.proxqp.dense.solve(H=P.toarray(), g=q, C=A.toarray(), l=l, u=u)
 
-    def _solver_qp_clarabel(self, P, q, A, l, u):
+    def _solve_qp_clarabel(self, P, q, A, l, u):
         import clarabel
 
         aug_A = sparse.vstack([A, -1 * A])
