@@ -330,3 +330,6 @@ for step in range(num_steps):
     robot.visualize(control_input, nominal_control, goal, occ, h_field, grid_res, obs_grid_pos)
 
 robot.save_gif("poisson_cbf_moving_obstacle.gif")
+
+from IPython.display import Image
+Image(open('poisson_cbf_moving_obstacle.gif','rb').read())
