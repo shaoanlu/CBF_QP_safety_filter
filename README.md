@@ -38,7 +38,7 @@ docker compose up --build
 
 To stop the container, execute the following command
 ```bash
-docker compose down
+docker compose down -v
 ```
 
 ### Execution in local environment

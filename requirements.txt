@@ -1,0 +1,6 @@
+numpy==1.26.4
+scipy==1.13.1
+osqp==0.6.7
+pygame==2.6.1
+proxsuite==0.6.7
+clarabel==0.10.0

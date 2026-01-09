@@ -1,5 +1,5 @@
 # Use an official Python image with version 3.6+
-FROM python:3.10-slim
+FROM python:3.10-slim-bullseye
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -17,7 +17,9 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxrender1 \
     && rm -rf /var/lib/apt/lists/*
-RUN pip install --no-cache-dir numpy==1.26.4 scipy==1.13.1 osqp==0.6.7 pygame==2.6.1 proxsuite==0.6.7 clarabel==0.10.0
+
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose any required ports (if needed by pygame or other services)
 EXPOSE 8000
