@@ -270,9 +270,8 @@ class RobotCBF(ControllerInterface):
             max_control, min_control = control_bounds
             constraints.append(u_var <= max_control)
             constraints.append(u_var >= min_control)
-        constraints.append(delta >= 0.0)
 
-        objective = cp.Minimize(cp.norm(u_var - control)**2 + penalty_slack * cp.sum_squares(delta))
+        objective = cp.Minimize(cp.norm(u_var - control)**2 + penalty_slack * cp.sum_squares(delta))  # cp.norm to trigger SOCP solver
         prob = cp.Problem(objective, constraints)
         prob.solve(solver=cp.CLARABEL, verbose=False)
 
