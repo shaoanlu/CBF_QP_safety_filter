@@ -4,3 +4,4 @@ osqp==0.6.7
 pygame==2.6.1
 proxsuite==0.6.7
 clarabel==0.10.0
+cvxpy==1.5.2

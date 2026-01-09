@@ -1,13 +1,11 @@
+import cvxpy as cp
 import numpy as np
-from scipy import sparse
 from scipy.special import logsumexp
 
-import osqp
 from typing import Optional, List, Literal, Tuple
 
 from models.i_model import ModelInterface
 from controllers.i_controller import ControllerInterface
-from controllers.components.cbfqp_problem import CBFQPFormulation
 
 from controllers.components.disturbance_observer import (
     BasicDisturbanceObserver,
@@ -138,7 +136,7 @@ class RobotCBF(ControllerInterface):
         force_direction_unchanged: bool,
         collision_objects: list,
         is_lidar_simulation: bool = False,
-        qpsolver: Literal["osqp", "proxqp", "clarabel"] = "osqp",
+        qpsolver: Literal["clarabel"] = "clarabel",
     ):
         if len(collision_objects) == 0:
             self.ux, self.uy = ux, uy
@@ -159,7 +157,7 @@ class RobotCBF(ControllerInterface):
 
         # Solve CBF-QP
         control = np.array([ux, uy])
-        control_bounds = self._get_control_bounds(control, force_direction_unchanged)
+        control_bounds = self._get_control_bounds(control, force_direction_unchanged) if force_direction_unchanged else None
         ux, uy = self._solve_cbf_qp(
             h=h,
             coeffs_dhdx=coeffs_dhdx,
@@ -249,59 +247,40 @@ class RobotCBF(ControllerInterface):
         coeffs_dhdx: List[List[float]],
         disturbance_h_dot: List[float],
         control: np.ndarray,
-        control_bounds: Tuple[np.ndarray, np.ndarray],
+        control_bounds: Optional[Tuple[np.ndarray, np.ndarray]],
         cbf_alpha: float,
         penalty_slack: float,
-        solver: Literal["osqp", "proxqp", "clarabel"] = "osqp",
-    ) -> Optional[np.ndarray]:
-        max_control, min_control = control_bounds
-        qp_formulation = CBFQPFormulation(nx=self.nx, nh=len(h))
-        qp_data = qp_formulation.create_matrices(
-            h=h,
-            coeffs_dhdx=coeffs_dhdx,
-            nominal_control=control,
-            max_control=max_control,
-            min_control=min_control,
-            cbf_alpha=cbf_alpha,
-            slack_penalty=penalty_slack,
-            disturbance_h_dot=disturbance_h_dot,
-        )
-        P, q, A, l, u = qp_data.P, qp_data.q, qp_data.A, qp_data.l, qp_data.u
+        solver: Literal["clarabel"] = "clarabel",
+    ) -> Tuple[Optional[float], Optional[float]]:
 
-        # Solve QP problem using selected solver
-        # in general, all solvers perform the same, but some may be faster than others (osqp the slowest)
-        if solver.lower() == "osqp":
-            res = self._solve_qp_osqp(P, q, A, l, u)
-        elif solver.lower() == "proxqp":
-            res = self._solve_qp_proxqp(P, q, A, l, u)
-        elif solver.lower() == "clarabel":
-            res = self._solve_qp_clarabel(P, q, A, l, u)
-        else:
-            raise ValueError(f"Unknown QP solver: {solver}")
+        if solver.lower() != "clarabel":
+            raise ValueError(f"Only clarabel is supported for the CVXPY SOCP formulation (got {solver}).")
 
-        ux, uy = res.x[: self.nx]
+        nh = len(h)
+        coeffs = np.asarray(coeffs_dhdx, dtype=float)
+        h_vec = np.asarray(h, dtype=float)
+        disturbance = np.asarray(disturbance_h_dot, dtype=float)
+
+        u_var = cp.Variable(self.nx)
+        delta = cp.Variable(nh)
+        x = cp.hstack([u_var, delta])
+
+        constraints = [coeffs @ x >= -cbf_alpha * h_vec - disturbance]
+        if control_bounds is not None:
+            max_control, min_control = control_bounds
+            constraints.append(u_var <= max_control)
+            constraints.append(u_var >= min_control)
+        constraints.append(delta >= 0.0)
+
+        objective = cp.Minimize(cp.norm(u_var - control)**2 + penalty_slack * cp.sum_squares(delta))
+        prob = cp.Problem(objective, constraints)
+        prob.solve(solver=cp.CLARABEL, verbose=False)
+
+        if prob.status not in ("optimal", "optimal_inaccurate"):
+            return None, None
+
+        ux, uy = u_var.value[: self.nx]
         return ux, uy
-
-    def _solve_qp_osqp(self, P, q, A, l, u):
-        prob = osqp.OSQP()
-        prob.setup(P, q, A, l, u, verbose=False, time_limit=0)
-        return prob.solve()
-
-    def _solve_qp_proxqp(self, P, q, A, l, u):
-        import proxsuite
-
-        return proxsuite.proxqp.dense.solve(H=P.toarray(), g=q, C=A.toarray(), l=l, u=u)
-
-    def _solve_qp_clarabel(self, P, q, A, l, u):
-        import clarabel
-
-        aug_A = sparse.vstack([A, -1 * A])
-        aug_u = np.concatenate([u, -l])
-        cones = [clarabel.NonnegativeConeT(aug_u.shape[0])]
-        settings = clarabel.DefaultSettings()
-        settings.verbose = False
-        prob = clarabel.DefaultSolver(P, q, aug_A, aug_u, cones, settings)
-        return prob.solve()
 
     def detect_collision(self, collision_objects: list = []):
         """
